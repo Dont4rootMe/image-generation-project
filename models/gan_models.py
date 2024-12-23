@@ -4,6 +4,8 @@ from torch import nn
 from torch.nn import functional as F
 from utils.class_registry import ClassRegistry
 
+import os
+
 
 gens_registry = ClassRegistry()
 discs_registry = ClassRegistry()
@@ -34,6 +36,11 @@ class VerySimpleGenarator(nn.Module):
             x = F.interpolate(x, x.size(-1) * 2)
         x = self.to_rgb_block(x)
         return x
+    
+    def load_model(self, path):
+        assert os.path.exists(path), f'Base Generator model weights were not found on path {path}'
+        self.load_state_dict(torch.load(path))
+        return self
 
 
 @discs_registry.add_to_registry(name="base_disc")
@@ -42,7 +49,7 @@ class VerySimpleDiscriminator(nn.Module):
         super().__init__()
         self.hidden_dim = model_config["hidden_dim"]
         self.blocks_num = model_config["blocks_num"]
-
+        
         self.from_rgb_block = VerySimpleBlock(3, self.hidden_dim)
 
         self.blocks = nn.ModuleList([])
@@ -59,8 +66,12 @@ class VerySimpleDiscriminator(nn.Module):
             x = block(x)
             x = F.interpolate(x, x.size(-1) // 2)
         x = self.to_label(x)
-        x = self.sigmoid(x)
         return x
+    
+    def load_model(self, path):
+        assert os.path.exists(path), f'Base Discriminator model weights were not found on path {path}'
+        self.load_state_dict(torch.load(path))
+        return self
 
 
 class VerySimpleBlock(nn.Module):

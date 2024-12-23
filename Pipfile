@@ -5,8 +5,16 @@ name = "pypi"
 
 [packages]
 torch = "*"
+torchvision = "*"
+numpy = "*"
 pillow = "*"
+torchmetrics = "*"
 omegaconf = "*"
+tqdm = "*"
+wandb = "*"
+pandas = "*"
+pytorch-fid = "*"
+scipy = "==1.11.1"
 
 [dev-packages]
 
