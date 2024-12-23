@@ -93,8 +93,8 @@ class WasserstainGenerator(nn.Module):
     def __init__(self, model_config):
         super().__init__()
         
-        self.latent_dim = model_config.generator_args.z_dim
-        self.feature_map_size = model_config.generator_args.hidden_dim
+        self.latent_dim = model_config.z_dim
+        self.feature_map_size = model_config.hidden_dim
         self.img_channels = 3
         
         self.model = nn.Sequential(
@@ -124,7 +124,7 @@ class WasserstainGenerator(nn.Module):
         )
         
     def forward(self, x):
-        x = x.view(1, self.latent_dim, 1, 1)
+        x = x.view(x.size(0), self.latent_dim, 1, 1)
         return self.model(x)
     
 @discs_registry.add_to_registry(name="wasserstain_critic")
@@ -132,7 +132,7 @@ class WasserstainCritic(nn.Module):
     def __init__(self, model_config):
         super().__init__()
 
-        self.feature_map_size = model_config.generator_args.hidden_dim
+        self.feature_map_size = model_config.hidden_dim
         self.img_channels = 3
         
         self.model = nn.Sequential(

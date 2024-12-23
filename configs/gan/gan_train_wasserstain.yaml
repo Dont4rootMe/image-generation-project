@@ -17,7 +17,7 @@ data:
     dataset_name: base_dataset
     input_train_dir: data/food_data/train
     input_val_dir: data/food_data/test
-    normalize_data: True
+    normalize_data: False
     samples_to_normalize: null
     train_batch_size: 8
     val_batch_size: 8
@@ -30,7 +30,7 @@ train:
     critic: wasserstain_critic
     gen_optimizer: adam
     critic_optimizer: rmsprop
-    add_noise: False
+    add_noise: True
     use_amp: False
     val_metrics: ["fid/isc/kid"]
     start_step: 0

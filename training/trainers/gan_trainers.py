@@ -222,14 +222,14 @@ class WasserstainGANTrainer(BaseTrainer):
             total_loss_disc, loss_dict_disc = self.loss_builder.calculate_loss(preds_dict, loss_type='critic')
 
         # compute gradient over discriminator loss and make dicriminator step
-        self.dicriminator_optimizer.zero_grad()
+        self.critic_optimizer.zero_grad()
         if self.config.train.use_amp:
             self.scaler.scale(total_loss_disc).backward()
-            self.scaler.step(self.dicriminator_optimizer)
+            self.scaler.step(self.critic_optimizer)
             self.scaler.update()
         else:
             total_loss_disc.backward()
-            self.dicriminator_optimizer.step()
+            self.critic_optimizer.step()
 
         # TRAIN GENERATOR
         with torch.amp.autocast(enabled=self.config.train.use_amp, device_type=self.device):
