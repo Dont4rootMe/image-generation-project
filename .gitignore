@@ -153,3 +153,4 @@ cache
 # data
 data/*
 experiments/*
+checkpoints/*
