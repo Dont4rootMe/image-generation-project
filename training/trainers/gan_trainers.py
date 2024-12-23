@@ -48,7 +48,7 @@ class BaseGANTrainer(BaseTrainer):
 
     def train_step(self):
         # TRAIN DISCRIMINATOR
-        with torch.amp.autocast(enabled=self.config['train']['use_amp'], device_type=self.device):
+        with torch.amp.autocast(enabled=self.config.train.use_amp, device_type=self.device):
             # get real images from dataset
             real_images = next(self.train_dataloader)['images'].to(self.device)
 
@@ -132,3 +132,104 @@ class BaseGANTrainer(BaseTrainer):
             save_image(generated_images[i] * std[:, None, None] - mean[:, None, None] , image_path)
 
         return generated_images, path_to_saved_pics
+
+
+@gan_trainers_registry.add_to_registry(name="wasserstain_gan_trainer")
+class WasserstainGANTrainer(BaseTrainer):
+    def setup_models(self):
+        self.generator = gens_registry['wasserstain_gen'](self.config.generator_args).to(self.device)
+        self.critic = discs_registry['wasserstain_critic'](self.config.discriminator_args).to(self.device)
+
+        if self.config.train.checkpoint_path is not None:
+            self.generator.load_model(self.checkpoint_path / 'generator.pth')
+            self.critic.load_model(self.checkpoint_path / 'critic.pth')
+
+    def setup_optimizers(self):
+        self.generator_optimizer = optimizers_registry[self.config['train']['gen_optimizer']](
+            self.generator.parameters(), **self.config['gen_optimizer_args']
+        )
+        self.critic_optimizer = optimizers_registry[self.config['train']['critic_optimizer']](
+            self.critic.parameters(), **self.config['critic_optimizer_args']
+        )
+
+        if self.config.train.checkpoint_path is not None:
+            self.generator_optimizer.load_model(self.checkpoint_path / 'gen_optimizer.pth')
+            self.critic_optimizer.load_model(self.checkpoint_path / 'critic_optimizer.pth')
+            
+    def setup_losses(self):
+        self.loss_builder = GANLossBuilder(self.config)
+
+    def to_train(self):
+        self.generator.train()
+        self.critic.train()
+
+    def to_eval(self):
+        self.generator.eval()
+        self.critic.eval()
+        
+    def train_step(self):
+        # TRAIN DISCRIMINATOR
+        with torch.amp.autocast(enabled=self.config['train']['use_amp'], device_type=self.device):
+            # get real images from dataset
+            real_images = next(self.train_dataloader)['images'].to(self.device)
+
+            # get synthetic images via generator
+            z = torch.normal(0, 1, (self.config.data.train_batch_size, self.config.generator_args.z_dim), device=self.device)
+            fake_images = self.generator(z)
+            
+            # create interpolated images
+            batch_size = real_images.size(0)
+            epsilon = torch.rand(batch_size, 1, 1, 1, device=real_images.device)
+            interpolated_data = epsilon * real_images + (1 - epsilon) * fake_images
+            interpolated_data.requires_grad_(True)
+
+            # calculate disc losses, make discriminator step
+            preds_dict = {
+                'real_preds': self.critic(real_images),
+                'fake_preds': self.critic(fake_images.detach()),
+                'interpolated_data': interpolated_data,
+                'interpolated_preds': self.critic(interpolated_data),
+                'batch_size': batch_size
+            }
+
+            # Compute loss of the discriminator
+            total_loss_disc, loss_dict_disc = self.loss_builder.calculate_loss(preds_dict, loss_type='critic')
+
+        # compute gradient over discriminator loss and make dicriminator step
+        self.dicriminator_optimizer.zero_grad()
+        if self.config.train.use_amp:
+            self.scaler.scale(total_loss_disc).backward()
+            self.scaler.step(self.dicriminator_optimizer)
+            self.scaler.update()
+        else:
+            total_loss_disc.backward()
+            self.dicriminator_optimizer.step()
+
+        # TRAIN GENERATOR
+        with torch.amp.autocast(enabled=self.config.train.use_amp, device_type=self.device):
+            # get synthetic images via generator
+            z = torch.normal(0, 1, (self.config.data.train_batch_size, self.config.generator_args.z_dim), device=self.device)
+            fake_images = self.generator(z)
+
+            # calculate gen losses, make generator step
+            preds_dict = {
+                'fake_preds': self.critic(fake_images)
+            }
+
+            # Compute loss of the generator
+            total_loss_gen, loss_dict_gen = self.loss_builder.calculate_loss(preds_dict, loss_type='gen')
+
+        # compute gradient over generator loss and make generator step
+        self.generator_optimizer.zero_grad()
+        if self.config.train.use_amp:
+            self.scaler.scale(total_loss_gen).backward()
+            self.scaler.step(self.generator_optimizer)
+            self.scaler.update()
+        else:
+            total_loss_gen.backward()
+            self.generator_optimizer.step()
+
+        return {
+            'total_gen_loss': total_loss_gen,
+            'total_disc_loss': total_loss_disc,
+        }

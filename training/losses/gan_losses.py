@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import torch.autograd as autograd
 
 from torch.nn import functional as F
 from utils.class_registry import ClassRegistry
@@ -36,7 +37,7 @@ class GANLossBuilder:
 
         if loss_type == "gen":
             losses = self.gen_losses
-        elif loss_type == "disc":
+        elif loss_type == "disc" or loss_type == "critic":
             losses = self.disc_losses
 
         for loss_name, loss in losses.items():
@@ -75,3 +76,34 @@ class BCELossDisc(nn.Module):
 
     def forward(self, batch):
         return self.loss_fn(batch['real_preds'], torch.ones_like(batch['real_preds'])) + self.loss_fn(batch['fake_preds'], torch.zeros_like(batch['fake_preds']))
+
+# WASSERSTAIN FAMILIES
+@gen_losses_registry.add_to_registry(name="wasserstain_gen")
+class WassersteinGenLoss(nn.Module):
+    def forward(self, batch):
+        return -batch['fake_preds'].mean()
+    
+@disc_losses_registry.add_to_registry(name="wasserstain_critic")
+class WassersteinCriticLoss(nn.Module):
+    def forward(self, batch):
+        return batch['fake_preds'].mean() - batch['real_preds'].mean()
+    
+@disc_losses_registry.add_to_registry(name="wasserstein_gp")
+class WassersteinGradientPenalty(nn.Module):
+    def forward(self, batch):
+        """
+        Get penalty over WGAN-GP backpropagation.
+        """
+        # get gradient w.r.t. interpolated data
+        gradients = autograd.grad(outputs=batch['interpolated_preds'], 
+                                  inputs=batch['interpolated_data'], 
+                                  grad_outputs=torch.ones_like(batch['interpolated_preds']), 
+                                  create_graph=True, retain_graph=True, only_inputs=True)[0]
+        
+        # get norm of gradients
+        grad_norm = gradients.view(batch['batch_size'], -1).norm(2, dim=1)
+        
+        # compute penalty MSE
+        gradient_penalty = ((grad_norm - 1) ** 2).mean()
+        
+        return gradient_penalty
