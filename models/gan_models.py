@@ -88,7 +88,7 @@ class VerySimpleBlock(nn.Module):
         x = self.activation(x)
         return x
 
-@discs_registry.add_to_registry(name="wasserstain_gen")
+@gens_registry.add_to_registry(name="wasserstain_gen")
 class WasserstainGenerator(nn.Module):
     def __init__(self, model_config):
         super().__init__()
@@ -142,17 +142,14 @@ class WasserstainCritic(nn.Module):
 
             # (feature_map_size) x 32 x 32 -> (feature_map_size * 2) x 16 x 16
             nn.Conv2d(self.feature_map_size, self.feature_map_size * 2, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(self.feature_map_size * 2),
             nn.LeakyReLU(0.2, inplace=True),
 
             # (feature_map_size * 2) x 16 x 16 -> (feature_map_size * 4) x 8 x 8
             nn.Conv2d(self.feature_map_size * 2, self.feature_map_size * 4, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(self.feature_map_size * 4),
             nn.LeakyReLU(0.2, inplace=True),
 
             # (feature_map_size * 4) x 8 x 8 -> (feature_map_size * 8) x 4 x 4
             nn.Conv2d(self.feature_map_size * 4, self.feature_map_size * 8, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(self.feature_map_size * 8),
             nn.LeakyReLU(0.2, inplace=True),
 
             # (feature_map_size * 8) x 4 x 4 -> 1 x 1 x 1 (скаляр)

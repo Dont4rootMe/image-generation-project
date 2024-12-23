@@ -1,5 +1,5 @@
 exp:
-    exp_dir: experiments/base_gan_test
+    exp_dir: experiments/wasserstain_gan
     device: mps
     seed: 777
     use_wandb: True
@@ -25,11 +25,12 @@ data:
 
 train:
     checkpoint_path: null
-    trainer: base_gan_trainer
-    generator: base_gen
-    discriminator: base_disc
+    trainer: wasserstain_gan_trainer
+    generator: wasserstain_gen
+    critic: wasserstain_critic
     gen_optimizer: adam
-    disc_optimizer: adam
+    critic_optimizer: rmsprop
+    add_noise: False
     use_amp: False
     val_metrics: ["fid/isc/kid"]
     start_step: 0
@@ -39,28 +40,24 @@ train:
     val_step: 15000
 
 generator_args:
-    z_dim: 32
+    z_dim: 128
     hidden_dim: 512
-    blocks_num: 4
 
-discriminator_args:
+critic_args:
     hidden_dim: 512
-    blocks_num: 4
 
 gen_optimizer_args:
-    lr: 0.0001
+    lr: 0.001
 
-disc_optimizer_args:
+critic_optimizer_args:
     lr: 0.0001
-
-losses:
-    - gen_losses
-    - disc_losses
+    momentum: 0.1
 
 gen_losses:
-    softplus_gen: 1.0
+    wasserstain_gen: 1.0
 
 disc_losses:
-    softplus_disc: 1.0
+    wasserstain_critic: 1.0
+    wasserstein_gp: 10.0
 
 loss_args: []

@@ -134,6 +134,10 @@ class BaseTrainer:
             shuffle=True,
             num_workers=self.config.data.workers
         )
+        
+    @abstractmethod
+    def get_modules_dict(self):
+        pass
 
     def training_loop(self):
         self.to_train()
@@ -147,7 +151,8 @@ class BaseTrainer:
 
                 self.logger.log_val_metrics(val_metrics_dict, step=self.step)
                 self.logger.log_batch_of_images(images, step=self.step, images_type="validation")
-
+                self.logger.log_model_parameters(self.get_modules_dict(), step=self.step)
+                
             if self.step % self.config.train.log_step == 0:
                 self.logger.log_train_losses(self.step)
 

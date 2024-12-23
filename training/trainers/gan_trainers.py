@@ -1,6 +1,7 @@
 from utils.class_registry import ClassRegistry
 from utils.model_utils import requires_grad
 from training.trainers.base_trainer import BaseTrainer
+from training.noise import NoiseScheduler
 
 from models.gan_models import gens_registry, discs_registry
 from training.optimizers import optimizers_registry
@@ -104,6 +105,14 @@ class BaseGANTrainer(BaseTrainer):
             'total_disc_loss': total_loss_disc,
         }
 
+    def get_modules_dict(self):
+        return {
+            'gen': self.generator,
+            'disc': self.descriminator,
+            'optimizer_gan': self.generator_optimizer,
+            'optimizer_disc': self.dicriminator_optimizer
+        }
+
     def save_checkpoint(self):
         torch.save(self.generator.state_dict(), self.save_path / 'generator.pth')
         torch.save(self.descriminator.state_dict(), self.save_path / 'discriminator.pth')
@@ -122,23 +131,29 @@ class BaseGANTrainer(BaseTrainer):
         else:
             path_to_saved_pics = self.image_path / f"train/step_{step}"
             path_to_saved_pics.mkdir(parents=True, exist_ok=True)
-            
+
         mean = self.data_mean
         std = self.data_std
 
         # save images
         for i in range(self.config.data.val_batch_size):
             image_path = path_to_saved_pics / f"generated_image_{i + 1}.png"
-            save_image(generated_images[i] * std[:, None, None] - mean[:, None, None] , image_path)
+            save_image(generated_images[i] * std[:, None, None] - mean[:, None, None], image_path)
 
         return generated_images, path_to_saved_pics
 
 
 @gan_trainers_registry.add_to_registry(name="wasserstain_gan_trainer")
 class WasserstainGANTrainer(BaseTrainer):
+    def __init__(self, config):
+        super().__init__(config)
+        
+        if self.config.train.add_noise:
+            self.noise_sceduler = NoiseScheduler(0.3, self.config.train.steps)
+    
     def setup_models(self):
         self.generator = gens_registry['wasserstain_gen'](self.config.generator_args).to(self.device)
-        self.critic = discs_registry['wasserstain_critic'](self.config.discriminator_args).to(self.device)
+        self.critic = discs_registry['wasserstain_critic'](self.config.critic_args).to(self.device)
 
         if self.config.train.checkpoint_path is not None:
             self.generator.load_model(self.checkpoint_path / 'generator.pth')
@@ -155,7 +170,7 @@ class WasserstainGANTrainer(BaseTrainer):
         if self.config.train.checkpoint_path is not None:
             self.generator_optimizer.load_model(self.checkpoint_path / 'gen_optimizer.pth')
             self.critic_optimizer.load_model(self.checkpoint_path / 'critic_optimizer.pth')
-            
+
     def setup_losses(self):
         self.loss_builder = GANLossBuilder(self.config)
 
@@ -166,17 +181,28 @@ class WasserstainGANTrainer(BaseTrainer):
     def to_eval(self):
         self.generator.eval()
         self.critic.eval()
-        
+
+    def get_modules_dict(self):
+        return {
+            'gen': self.generator,
+            'critic': self.critic,
+            'optimizer_gan': self.generator_optimizer,
+            'optimizer_critic': self.critic_optimizer
+        }
+
     def train_step(self):
         # TRAIN DISCRIMINATOR
         with torch.amp.autocast(enabled=self.config['train']['use_amp'], device_type=self.device):
             # get real images from dataset
             real_images = next(self.train_dataloader)['images'].to(self.device)
+            
+            if self.config.train.add_noise:
+                real_images = self.noise_sceduler(real_images, self.step)
 
             # get synthetic images via generator
             z = torch.normal(0, 1, (self.config.data.train_batch_size, self.config.generator_args.z_dim), device=self.device)
             fake_images = self.generator(z)
-            
+
             # create interpolated images
             batch_size = real_images.size(0)
             epsilon = torch.rand(batch_size, 1, 1, 1, device=real_images.device)
@@ -233,3 +259,32 @@ class WasserstainGANTrainer(BaseTrainer):
             'total_gen_loss': total_loss_gen,
             'total_disc_loss': total_loss_disc,
         }
+
+    def save_checkpoint(self):
+        torch.save(self.generator.state_dict(), self.save_path / 'generator.pth')
+        torch.save(self.critic.state_dict(), self.save_path / 'critic.pth')
+        torch.save(self.generator_optimizer.state_dict(), self.save_path / 'gen_optimizer.pth')
+        torch.save(self.critic_optimizer.state_dict(), self.save_path / 'critic_optimizer.pth')
+
+    def synthesize_images(self, step=None):
+        z = torch.normal(0, 1, (self.config.data.val_batch_size, self.config.generator_args.z_dim), device=self.device)
+
+        with torch.no_grad():
+            generated_images = self.generator(z)
+
+        # prepare path to save images
+        if step is None:
+            path_to_saved_pics = self.inference_path
+        else:
+            path_to_saved_pics = self.image_path / f"train/step_{step}"
+            path_to_saved_pics.mkdir(parents=True, exist_ok=True)
+
+        mean = self.data_mean
+        std = self.data_std
+
+        # save images
+        for i in range(self.config.data.val_batch_size):
+            image_path = path_to_saved_pics / f"generated_image_{i + 1}.png"
+            save_image(generated_images[i] * std[:, None, None] - mean[:, None, None], image_path)
+
+        return generated_images, path_to_saved_pics
