@@ -96,9 +96,8 @@ class BaseTrainer:
         self.inference_path.mkdir(parents=True, exist_ok=True)
         
         # create dir for validation image generation
-        self.all_validation_images = glob(self.config.data.input_val_dir + '/*/*.jpg')
+        self.all_validation_images = np.asarray(glob(self.config.data.input_val_dir + '/*/*.jpg'))
         self.validation_temp_dir = self.experiment_dir / 'validation_temp'
-        self.validation_temp_dir.mkdir(parents=True, exist_ok=True)
 
     def setup_metrics(self):
         self.metrics = []
@@ -149,10 +148,10 @@ class BaseTrainer:
                 self.logger.log_val_metrics(val_metrics_dict, step=self.step)
                 self.logger.log_batch_of_images(images, step=self.step, images_type="validation")
 
-            if self.global_step % self.config.train.log_step == 0:
-                self.logger.log_train_losses(self.global_step)
+            if self.step % self.config.train.log_step == 0:
+                self.logger.log_train_losses(self.step)
 
-            if self.global_step % self.config.train.checkpoint_step == 0:
+            if self.step % self.config.train.checkpoint_step == 0:
                 self.save_checkpoint()
 
     @abstractmethod
@@ -168,20 +167,25 @@ class BaseTrainer:
         self.to_eval()
         images_sample, images_pth = self.synthesize_images(self.step)
         
-        indexes = np.random.choice(len(self.all_validation_images), 1000, replace=False)
-        paths_to_move = self.all_validation_images[indexes]
-        shutil.rmtree(self.validation_temp_dir)
+        # creation temporate dir for validation images
+        if self.validation_temp_dir.exists():
+            shutil.rmtree(self.validation_temp_dir)
         self.validation_temp_dir.mkdir(parents=True, exist_ok=True)
-        for i, path in enumerate(paths_to_move):
+        for i, path in enumerate(self.all_validation_images):
             shutil.copy(path, self.validation_temp_dir / f"{i}.jpg")
 
         metrics_dict = {}
         for metric in self.metrics:
-            metrics_dict[metric.get_name()] = metric(
-                orig_pth=self.all_validation_images,
-                synt_pth=images_pth,
+            stats = metric(
+                orig_pth=str(self.validation_temp_dir),
+                synt_pth=str(images_pth),
                 device=self.device
             )
+            metrics_dict.update(stats) 
+        
+        # delition of temporate dir
+        shutil.rmtree(self.validation_temp_dir)
+        
         return metrics_dict, images_sample
 
     @abstractmethod

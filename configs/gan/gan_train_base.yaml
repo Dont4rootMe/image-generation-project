@@ -31,7 +31,7 @@ train:
     gen_optimizer: adam
     disc_optimizer: adam
     use_amp: False
-    val_metrics: ["fid", "ms-ssim"]
+    val_metrics: ["fid/isc/kid"]
     start_step: 0
     steps: 300000
     log_step: 500

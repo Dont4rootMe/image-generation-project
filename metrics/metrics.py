@@ -1,5 +1,5 @@
 from utils.class_registry import ClassRegistry
-from pytorch_fid import fid_score
+from torch_fidelity import calculate_metrics
 from torchvision import transforms
 from PIL import Image
 import torch
@@ -10,20 +10,34 @@ from torchmetrics.image.ssim import MultiScaleStructuralSimilarityIndexMeasure
 metrics_registry = ClassRegistry()
 
 
-@metrics_registry.add_to_registry(name="fid")
-class FID:    
+@metrics_registry.add_to_registry(name="fid/isc/kid")
+class FID:  
+    def get_name(self):
+        return "fid"
+      
     def __call__(self, orig_pth, synt_pth, device):
-        fid = fid_score.calculate_fid_given_paths(
-            [orig_pth, synt_pth],  # pathes to real and synthetic images
-            batch_size=50,         # batch size for calculation of FID
-            device=device,         # wether to use GPU or not
-            dims=2048              # dimensions of features (Inception Network)
+        metrics = calculate_metrics(
+            input1=orig_pth,
+            input2=synt_pth,
+            kid_subset_size=8,
+            cuda=(device == "cuda"),
+            isc=True,  # Inception Score не требуется
+            fid=True,  # FID не требуется
+            kid=True,  # Вычисление KID
         )
-        return fid
+
+        return {
+            'inception_score (isc)': metrics['inception_score_mean'],
+            'frechet_inception_distance (fid)': metrics['frechet_inception_distance'],
+            'kernel_inception_distance (kid)': metrics['kernel_inception_distance_mean']
+        }
 
 @metrics_registry.add_to_registry(name="ms-ssim")
 class MS_SSIM:
-    def __call__(self, orig_pth, synt_pth):
+    def get_name(self):
+        return "ms-ssim"
+    
+    def __call__(self, orig_pth, synt_pth, *args, **kwargs):
         real_images_files = sorted([os.path.join(orig_pth, f) for f in os.listdir(orig_pth) if f.endswith(('png', 'jpg', 'jpeg'))])
         fake_images_files = sorted([os.path.join(synt_pth, f) for f in os.listdir(synt_pth) if f.endswith(('png', 'jpg', 'jpeg'))])
         

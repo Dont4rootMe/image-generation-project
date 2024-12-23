@@ -102,8 +102,6 @@ class BaseGANTrainer(BaseTrainer):
         return {
             'total_gen_loss': total_loss_gen,
             'total_disc_loss': total_loss_disc,
-            'gen_loss': {**loss_dict_gen},
-            'disc_loss': {**loss_dict_disc}
         }
 
     def save_checkpoint(self):

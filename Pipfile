@@ -13,8 +13,8 @@ omegaconf = "*"
 tqdm = "*"
 wandb = "*"
 pandas = "*"
-pytorch-fid = "*"
 scipy = "==1.11.1"
+torch-fidelity = "*"
 
 [dev-packages]
 
