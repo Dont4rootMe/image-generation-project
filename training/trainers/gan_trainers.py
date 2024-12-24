@@ -161,7 +161,7 @@ class BaseGANTrainer(BaseTrainer):
         # save samples from training step
         if self.config.data.n_save_images is not None:
             # get random samples from generated images
-            indexes = torch.as_tensor(np.choice(generated_images.size(0), self.config.data.n_save_images))
+            indexes = torch.as_tensor(np.random.choice(generated_images.size(0), self.config.data.n_save_images))
             sampled_images = generated_images[indexes.to(generated_images.device)]
             
             # save each
@@ -169,7 +169,7 @@ class BaseGANTrainer(BaseTrainer):
                 image_path = path_to_saved_pics / f"generated_image_{i + 1}.png"
                 save_image(sampled_images[i] * std[:, None, None] - mean[:, None, None], image_path)
         else:
-            indexes = torch.as_tensor(np.choice(generated_images.size(0), 16))
+            indexes = torch.as_tensor(np.random.choice(generated_images.size(0), 16))
             sampled_images = generated_images[indexes.to(generated_images.device)]
 
         return sampled_images, path_to_saved_pics
@@ -338,7 +338,7 @@ class WasserstainGANTrainer(BaseTrainer):
         # save samples from training step
         if self.config.data.n_save_images is not None:
             # get random samples from generated images
-            indexes = torch.as_tensor(np.choice(generated_images.size(0), self.config.data.n_save_images))
+            indexes = torch.as_tensor(np.random.choice(generated_images.size(0), self.config.data.n_save_images))
             sampled_images = generated_images[indexes.to(generated_images.device)]
             
             # save each
@@ -346,7 +346,7 @@ class WasserstainGANTrainer(BaseTrainer):
                 image_path = path_to_saved_pics / f"generated_image_{i + 1}.png"
                 save_image(sampled_images[i] * std[:, None, None] - mean[:, None, None], image_path)
         else:
-            indexes = torch.as_tensor(np.choice(generated_images.size(0), 16))
+            indexes = torch.as_tensor(np.random.choice(generated_images.size(0), 16))
             sampled_images = generated_images[indexes.to(generated_images.device)]
 
         return sampled_images, path_to_saved_pics
