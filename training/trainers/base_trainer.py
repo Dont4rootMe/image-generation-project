@@ -120,6 +120,9 @@ class BaseTrainer:
             normalize_data=self.config.data.normalize_data,
             mean=None, std=None
         )
+        
+        # get size of test
+        self.test_size = len(self.all_validation_images)
 
         # get normalization parameters from train dataset
         data_mean, data_std = self.train_dataset.mean, self.train_dataset.std
@@ -158,6 +161,10 @@ class BaseTrainer:
 
             if self.step % self.config.train.checkpoint_step == 0:
                 self.save_checkpoint()
+                
+        # delete temporal dir with images for validation
+        path_validation = self.image_path / "temp"
+        shutil.rmtree(path_validation)
 
     @abstractmethod
     def train_step(self):

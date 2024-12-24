@@ -21,6 +21,7 @@ data:
     samples_to_normalize: null
     train_batch_size: 8
     val_batch_size: 8
+    n_save_images: 16
     workers: 8
 
 train:
@@ -32,7 +33,7 @@ train:
     critic_optimizer: rmsprop
     add_noise: True
     use_amp: False
-    val_metrics: ["fid/isc/kid"]
+    val_metrics: ["fid/isc/kid", "ms-ssim"]
     start_step: 0
     steps: 300000
     log_step: 500

@@ -21,6 +21,7 @@ data:
     samples_to_normalize: null
     train_batch_size: 8
     val_batch_size: 8
+    n_save_images: 16
     workers: 8
 
 train:

@@ -8,8 +8,10 @@ from training.optimizers import optimizers_registry
 from training.losses.gan_losses import GANLossBuilder
 
 from torchvision.utils import save_image
+import numpy as np
+import shutil
 import torch
-import os
+import math
 
 gan_trainers_registry = ClassRegistry()
 
@@ -120,27 +122,56 @@ class BaseGANTrainer(BaseTrainer):
         torch.save(self.dicriminator_optimizer.state_dict(), self.save_path / 'disc_optimizer.pth')
 
     def synthesize_images(self, step=None):
-        z = torch.normal(0, 1, (self.config.data.val_batch_size, self.config.generator_args.z_dim), device=self.device)
+        generated_images = []
+        
+        for i in range(math.ceil(self.test_size / self.config.data.val_batch_size)):
+            z = torch.normal(0, 1, (self.config.data.val_batch_size, self.config.generator_args.z_dim), device=self.device)
 
-        with torch.no_grad():
-            generated_images = self.generator(z)
+            with torch.no_grad():
+                gen_ims = self.generator(z)
+                
+            generated_images.append(gen_ims)
+            
+        generated_images = torch.cat(generated_images, dim=0)
 
         # prepare path to save images
         if step is None:
+            # if it is inference – save to inference path
             path_to_saved_pics = self.inference_path
         else:
-            path_to_saved_pics = self.image_path / f"train/step_{step}"
-            path_to_saved_pics.mkdir(parents=True, exist_ok=True)
-
+            # if we save intermediate results - save in dir for that step
+            if self.config.data.n_save_images is not None:
+                path_to_saved_pics = self.image_path / f"train/step_{step}"
+                path_to_saved_pics.mkdir(parents=True, exist_ok=True)
+            
+            # clear temporal dir with images for validation
+            path_validation = self.image_path / "generative_temp"
+            shutil.rmtree(path_validation)
+            path_validation.mkdir(parents=True, exist_ok=True)
+            
         mean = self.data_mean
         std = self.data_std
 
-        # save images
+        # save images for validation
         for i in range(self.config.data.val_batch_size):
-            image_path = path_to_saved_pics / f"generated_image_{i + 1}.png"
+            image_path = path_validation / f"generated_image_{i + 1}.png"
             save_image(generated_images[i] * std[:, None, None] - mean[:, None, None], image_path)
+            
+        # save samples from training step
+        if self.config.data.n_save_images is not None:
+            # get random samples from generated images
+            indexes = torch.as_tensor(np.choice(generated_images.size(0), self.config.data.n_save_images))
+            sampled_images = generated_images[indexes.to(generated_images.device)]
+            
+            # save each
+            for i in range(len(sampled_images)):
+                image_path = path_to_saved_pics / f"generated_image_{i + 1}.png"
+                save_image(sampled_images[i] * std[:, None, None] - mean[:, None, None], image_path)
+        else:
+            indexes = torch.as_tensor(np.choice(generated_images.size(0), 16))
+            sampled_images = generated_images[indexes.to(generated_images.device)]
 
-        return generated_images, path_to_saved_pics
+        return sampled_images, path_to_saved_pics
 
 
 @gan_trainers_registry.add_to_registry(name="wasserstain_gan_trainer")
@@ -267,24 +298,53 @@ class WasserstainGANTrainer(BaseTrainer):
         torch.save(self.critic_optimizer.state_dict(), self.save_path / 'critic_optimizer.pth')
 
     def synthesize_images(self, step=None):
-        z = torch.normal(0, 1, (self.config.data.val_batch_size, self.config.generator_args.z_dim), device=self.device)
+        generated_images = []
+        
+        for i in range(math.ceil(self.test_size / self.config.data.val_batch_size)):
+            z = torch.normal(0, 1, (self.config.data.val_batch_size, self.config.generator_args.z_dim), device=self.device)
 
-        with torch.no_grad():
-            generated_images = self.generator(z)
+            with torch.no_grad():
+                gen_ims = self.generator(z)
+                
+            generated_images.append(gen_ims)
+            
+        generated_images = torch.cat(generated_images, dim=0)
 
         # prepare path to save images
         if step is None:
+            # if it is inference – save to inference path
             path_to_saved_pics = self.inference_path
         else:
-            path_to_saved_pics = self.image_path / f"train/step_{step}"
-            path_to_saved_pics.mkdir(parents=True, exist_ok=True)
-
+            # if we save intermediate results - save in dir for that step
+            if self.config.data.n_save_images is not None:
+                path_to_saved_pics = self.image_path / f"train/step_{step}"
+                path_to_saved_pics.mkdir(parents=True, exist_ok=True)
+            
+            # clear temporal dir with images for validation
+            path_validation = self.image_path / "generative_temp"
+            shutil.rmtree(path_validation)
+            path_validation.mkdir(parents=True, exist_ok=True)
+            
         mean = self.data_mean
         std = self.data_std
 
-        # save images
+        # save images for validation
         for i in range(self.config.data.val_batch_size):
-            image_path = path_to_saved_pics / f"generated_image_{i + 1}.png"
+            image_path = path_validation / f"generated_image_{i + 1}.png"
             save_image(generated_images[i] * std[:, None, None] - mean[:, None, None], image_path)
+            
+        # save samples from training step
+        if self.config.data.n_save_images is not None:
+            # get random samples from generated images
+            indexes = torch.as_tensor(np.choice(generated_images.size(0), self.config.data.n_save_images))
+            sampled_images = generated_images[indexes.to(generated_images.device)]
+            
+            # save each
+            for i in range(len(sampled_images)):
+                image_path = path_to_saved_pics / f"generated_image_{i + 1}.png"
+                save_image(sampled_images[i] * std[:, None, None] - mean[:, None, None], image_path)
+        else:
+            indexes = torch.as_tensor(np.choice(generated_images.size(0), 16))
+            sampled_images = generated_images[indexes.to(generated_images.device)]
 
-        return generated_images, path_to_saved_pics
+        return sampled_images, path_to_saved_pics
