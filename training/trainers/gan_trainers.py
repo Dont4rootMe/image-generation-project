@@ -349,4 +349,4 @@ class WasserstainGANTrainer(BaseTrainer):
             indexes = torch.as_tensor(np.random.choice(generated_images.size(0), 16))
             sampled_images = generated_images[indexes.to(generated_images.device)]
 
-        return sampled_images, path_to_saved_pics
+        return sampled_images, path_validation
