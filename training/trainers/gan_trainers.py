@@ -146,7 +146,8 @@ class BaseGANTrainer(BaseTrainer):
             
             # clear temporal dir with images for validation
             path_validation = self.image_path / "generative_temp"
-            shutil.rmtree(path_validation)
+            try: shutil.rmtree(path_validation)
+            except: pass
             path_validation.mkdir(parents=True, exist_ok=True)
             
         mean = self.data_mean
@@ -322,7 +323,8 @@ class WasserstainGANTrainer(BaseTrainer):
             
             # clear temporal dir with images for validation
             path_validation = self.image_path / "generative_temp"
-            shutil.rmtree(path_validation)
+            try: shutil.rmtree(path_validation)
+            except: pass
             path_validation.mkdir(parents=True, exist_ok=True)
             
         mean = self.data_mean

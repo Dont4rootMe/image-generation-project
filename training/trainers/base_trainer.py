@@ -164,7 +164,8 @@ class BaseTrainer:
                 
         # delete temporal dir with images for validation
         path_validation = self.image_path / "temp"
-        shutil.rmtree(path_validation)
+        try: shutil.rmtree(path_validation)
+        except: pass
 
     @abstractmethod
     def train_step(self):
@@ -181,7 +182,8 @@ class BaseTrainer:
         
         # creation temporate dir for validation images
         if self.validation_temp_dir.exists():
-            shutil.rmtree(self.validation_temp_dir)
+            try: shutil.rmtree(self.validation_temp_dir)
+            except: pass
         self.validation_temp_dir.mkdir(parents=True, exist_ok=True)
         for i, path in enumerate(self.all_validation_images):
             shutil.copy(path, self.validation_temp_dir / f"{i}.jpg")
@@ -196,7 +198,8 @@ class BaseTrainer:
             metrics_dict.update(stats) 
         
         # delition of temporate dir
-        shutil.rmtree(self.validation_temp_dir)
+        try: shutil.rmtree(self.validation_temp_dir)
+        except: pass
         
         return metrics_dict, images_sample
 
