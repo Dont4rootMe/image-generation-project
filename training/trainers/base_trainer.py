@@ -127,8 +127,8 @@ class BaseTrainer:
         # get normalization parameters from train dataset
         data_mean, data_std = self.train_dataset.mean, self.train_dataset.std
 
-        self.data_mean = torch.tensor(data_mean).to(self.device)
-        self.data_std = torch.tensor(data_std).to(self.device)
+        self.data_mean = data_mean.detach().clone()
+        self.data_std = data_std.detach().clone()
 
     def setup_dataloaders(self):
         self.train_dataloader = InfiniteLoader(
@@ -197,7 +197,7 @@ class BaseTrainer:
             )
             metrics_dict.update(stats) 
         
-        # delition of temporate dir
+        # delition of temporate dir 
         try: shutil.rmtree(self.validation_temp_dir)
         except: pass
         

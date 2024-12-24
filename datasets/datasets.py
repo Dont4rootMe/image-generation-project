@@ -43,8 +43,8 @@ class BaseDataset(Dataset):
 
         # otherwise if mean and std are provided then use them
         elif mean is not None and std is not None:
-            self.mean = torch.tensor(mean)
-            self.std = torch.tensor(std)
+            self.mean = mean.detach().clone()
+            self.std = std.detach().clone()
 
         # otherwise calculate them from data
         else:
@@ -53,6 +53,10 @@ class BaseDataset(Dataset):
             self.std = torch.tensor([1., 1., 1.])
             # then calculate them from data
             self.mean, self.std = self.get_normalization_params(samples_to_normalize)
+            
+            print(f'''Normalization: 
+                        mean=[{self.mean[0].item()}, {self.mean[1].item()}, {self.std[2].item()}], 
+                        std=[{self.mean[0].item()}, {self.std[1].item()}, {self.std[2].item()}]''')
 
     def __getitem__(self, ind):
         path = self.paths[ind]

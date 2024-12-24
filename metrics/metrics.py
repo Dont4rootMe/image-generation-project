@@ -44,7 +44,7 @@ class MS_SSIM:
         shuffle(real_images_files)
         real_images_files = real_images_files[:len(fake_images_files) * 100]
 
-        ms_ssim = MultiScaleStructuralSimilarityIndexMeasure(data_range=1.0)
+        ms_ssim = MultiScaleStructuralSimilarityIndexMeasure(data_range=1.0, kernel_size=5, betas=(0.0448, 0.3001, 0.2363))
 
         transform = transforms.Compose([
             transforms.ToTensor(),
@@ -60,5 +60,5 @@ class MS_SSIM:
             transform(Image.open(fake_file).convert("RGB"))
             for fake_file in fake_images_files
         ], dim=0)
-        
-        return ms_ssim(fake_imgs, real_imgs)
+
+        return {'ms-ssim': ms_ssim(fake_imgs, real_imgs)}

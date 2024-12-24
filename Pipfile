@@ -6,14 +6,12 @@ name = "pypi"
 [packages]
 torch = "*"
 torchvision = "*"
-numpy = "*"
-pillow = "*"
-torchmetrics = "*"
-omegaconf = "*"
-tqdm = "*"
 wandb = "*"
+numpy = "*"
 pandas = "*"
-scipy = "==1.11.1"
+pillow = "*"
+tqdm = "*"
+torchmetrics = "*"
 torch-fidelity = "*"
 
 [dev-packages]

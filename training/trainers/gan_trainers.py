@@ -132,7 +132,7 @@ class BaseGANTrainer(BaseTrainer):
                 
             generated_images.append(gen_ims)
             
-        generated_images = torch.cat(generated_images, dim=0)
+        generated_images = torch.cat(generated_images[:self.test_size], dim=0)
 
         # prepare path to save images
         if step is None:
@@ -154,7 +154,7 @@ class BaseGANTrainer(BaseTrainer):
         std = self.data_std
 
         # save images for validation
-        for i in range(self.config.data.val_batch_size):
+        for i in range(len(generated_images)):
             image_path = path_validation / f"generated_image_{i + 1}.png"
             save_image(generated_images[i] * std[:, None, None] - mean[:, None, None], image_path)
             
@@ -305,11 +305,11 @@ class WasserstainGANTrainer(BaseTrainer):
             z = torch.normal(0, 1, (self.config.data.val_batch_size, self.config.generator_args.z_dim), device=self.device)
 
             with torch.no_grad():
-                gen_ims = self.generator(z)
+                gen_ims = self.generator(z).detach().cpu()
                 
             generated_images.append(gen_ims)
-            
-        generated_images = torch.cat(generated_images, dim=0)
+        
+        generated_images = torch.cat(generated_images, dim=0)[:self.test_size]
 
         # prepare path to save images
         if step is None:
@@ -331,7 +331,7 @@ class WasserstainGANTrainer(BaseTrainer):
         std = self.data_std
 
         # save images for validation
-        for i in range(self.config.data.val_batch_size):
+        for i in range(len(generated_images)):
             image_path = path_validation / f"generated_image_{i + 1}.png"
             save_image(generated_images[i] * std[:, None, None] - mean[:, None, None], image_path)
             
