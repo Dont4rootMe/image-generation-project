@@ -1,6 +1,6 @@
 exp:
     exp_dir: experiments/wasserstain_gan
-    device: cuda 
+    device: mps 
     seed: 777
     use_wandb: True
     model_type: gan
@@ -45,11 +45,11 @@ train:
     proccessing:
         start_step: 0
         steps: 300000
-        log_step: 500
+        log_step: 200
         checkpoint_step: 15000
         val_step: 15000
 
-    use_amp: True
+    use_amp: False
     val_metrics: ["fid/isc/kid", "ms-ssim"]
 
 generator_args:
@@ -60,7 +60,7 @@ critic_args:
     hidden_dim: 512
 
 gen_optimizer_args:
-    lr: 0.001
+    lr: 0.0001
 
 critic_optimizer_args:
     lr: 0.0001

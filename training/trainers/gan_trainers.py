@@ -197,11 +197,11 @@ class WasserstainGANTrainer(BaseTrainer):
             self.critic.load_model(self.checkpoint_path / 'critic.pth')
 
     def setup_optimizers(self):
-        self.generator_optimizer = optimizers_registry[self.config['train']['gen_optimizer']](
-            self.generator.parameters(), **self.config['gen_optimizer_args']
+        self.generator_optimizer = optimizers_registry[self.config.train.models.gen_optimizer](
+            self.generator.parameters(), **self.config.gen_optimizer_args
         )
-        self.critic_optimizer = optimizers_registry[self.config['train']['critic_optimizer']](
-            self.critic.parameters(), **self.config['critic_optimizer_args']
+        self.critic_optimizer = optimizers_registry[self.config.train.models.critic_optimizer](
+            self.critic.parameters(), **self.config.critic_optimizer_args
         )
 
         if self.config.train.checkpoint_path is not None:

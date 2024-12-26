@@ -26,7 +26,7 @@ class BaseTrainer:
         self.config = config
 
         self.device = config.exp.device
-        self.start_step = config.train.proccessing.proccessing.start_step
+        self.start_step = config.train.proccessing.start_step
         self.step = 0
 
         if config.train.use_amp:
@@ -150,11 +150,11 @@ class BaseTrainer:
             self.logger.update_losses(losses_dict)
 
             if self.step % self.config.train.proccessing.val_step == 0:
-                val_metrics_dict, images = self.validate()
-
-                self.logger.log_val_metrics(val_metrics_dict, step=self.step)
-                self.logger.log_batch_of_images(images, step=self.step, images_type="validation")
                 self.logger.log_model_parameters(self.get_modules_dict(), step=self.step)
+
+                val_metrics_dict, images = self.validate()
+                self.logger.log_batch_of_images(images, step=self.step, images_type="validation")
+                self.logger.log_val_metrics(val_metrics_dict, step=self.step)
                 
             if self.step % self.config.train.proccessing.log_step == 0:
                 self.logger.log_train_losses(self.step)

@@ -104,9 +104,9 @@ class TrainingLogger:
                 wandb.log({
                     f"generator_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
                 }, step=step)
-                wandb.log({
-                    f"generator_gradients/{name}": wandb.Histogram(param.grad.data.cpu().numpy())
-                }, step=step)
+                # wandb.log({
+                #     f"generator_gradients/{name}": wandb.Histogram(param.grad.data.cpu().numpy())
+                # }, step=step)
 
         if 'disc' in modules:
             # logging discriminator weights
@@ -115,9 +115,9 @@ class TrainingLogger:
                     wandb.log({
                         f"discriminator_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
                     }, step=step)
-                    wandb.log({
-                        f"discriminator_gradients/{name}": wandb.Histogram(param.grad.data.cpu().numpy())
-                    }, step=step)
+                    # wandb.log({
+                    #     f"discriminator_gradients/{name}": wandb.Histogram(param.grad.data.cpu().numpy())
+                    # }, step=step)
         else:
             # logging critic weights and gradients
             for name, param in  modules['critic'].named_parameters():
@@ -125,9 +125,9 @@ class TrainingLogger:
                     wandb.log({
                         f"critic_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
                     }, step=step)
-                    wandb.log({
-                        f"critic_gradients/{name}": wandb.Histogram(param.grad.data.cpu().numpy())
-                    }, step=step)
+                    # wandb.log({
+                    #     f"critic_gradients/{name}": wandb.Histogram(param.grad.data.cpu().numpy())
+                    # }, step=step)
 
         # logging hyperparameters and states of optimizers
         if 'disc' in modules:    

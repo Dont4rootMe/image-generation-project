@@ -82,12 +82,12 @@ class BCELossDisc(nn.Module):
 class WassersteinGenLoss(nn.Module):
     def forward(self, batch):
         return -batch['fake_preds'].mean()
-    
+
 @disc_losses_registry.add_to_registry(name="wasserstain_critic")
 class WassersteinCriticLoss(nn.Module):
     def forward(self, batch):
         return batch['fake_preds'].mean() - batch['real_preds'].mean()
-    
+
 @disc_losses_registry.add_to_registry(name="wasserstein_gp")
 class WassersteinGradientPenalty(nn.Module):
     def forward(self, batch):

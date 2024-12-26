@@ -1,6 +1,9 @@
 from omegaconf import OmegaConf
 from utils.model_utils import setup_seed
 
+import warnings
+warnings.filterwarnings("ignore", message="divide by zero encountered in divide")
+
 
 def load_config():
     conf_cli = OmegaConf.from_cli()
