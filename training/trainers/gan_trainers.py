@@ -2,6 +2,7 @@ from utils.class_registry import ClassRegistry
 from utils.model_utils import requires_grad
 from training.trainers.base_trainer import BaseTrainer
 from training.noise import NoiseScheduler
+from training.fade_in import FadeInScheduler
 
 from models.gan_models import gens_registry, discs_registry
 from training.optimizers import optimizers_registry
@@ -180,8 +181,12 @@ class WasserstainGANTrainer(BaseTrainer):
     def __init__(self, config):
         super().__init__(config)
         
-        if self.config.train.add_noise:
-            self.noise_sceduler = NoiseScheduler(0.3, self.config.train.steps)
+        if 'noise' in self.config.train and self.config.train.noise.add_noise:
+            self.noise_sceduler = NoiseScheduler(self.config.train.noise.start_noise_std, self.config.train.proccessing.steps)
+           
+        if 'fade_in' in self.config.train and self.config.train.fade_in.use_fade_in:
+            self.fade_in_scheduler = FadeInScheduler(self.config.train.proccessing.steps, self.config.train.fade_in)
+        
     
     def setup_models(self):
         self.generator = gens_registry['wasserstain_gen'](self.config.generator_args).to(self.device)
@@ -228,8 +233,15 @@ class WasserstainGANTrainer(BaseTrainer):
             # get real images from dataset
             real_images = next(self.train_dataloader)['images'].to(self.device)
             
-            if self.config.train.add_noise:
+            # add noise to real samples
+            if self.config.train.noise.add_noise:
                 real_images = self.noise_sceduler(real_images, self.step)
+            
+            # apply fade in scheduler
+            if self.config.train.fade_in.use_fade_in:
+                real_images, new_lavel = self.fade_in_scheduler(real_images, self.step)
+                self.generator.block_number = new_lavel
+                self.critic.block_number = new_lavel
 
             # get synthetic images via generator
             z = torch.normal(0, 1, (self.config.data.train_batch_size, self.config.generator_args.z_dim), device=self.device)

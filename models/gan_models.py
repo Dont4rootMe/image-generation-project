@@ -97,35 +97,73 @@ class WasserstainGenerator(nn.Module):
         self.feature_map_size = model_config.hidden_dim
         self.img_channels = 3
         
-        self.model = nn.Sequential(
-            # (latent_dim) -> (feature_map_size * 16) x 4 x 4
-            nn.ConvTranspose2d(self.latent_dim, self.feature_map_size * 16, kernel_size=4, stride=1, padding=0, bias=False),
-            nn.BatchNorm2d(self.feature_map_size * 16),
-            nn.LeakyReLU(-0.2),
-
-            # (feature_map_size * 16) x 4 x 4 -> (feature_map_size * 8) x 8 x 8
-            nn.ConvTranspose2d(self.feature_map_size * 16, self.feature_map_size * 8, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(self.feature_map_size * 8),
-            nn.LeakyReLU(-0.2),
-
-            # (feature_map_size * 8) x 8 x 8 -> (feature_map_size * 4) x 16 x 16
-            nn.ConvTranspose2d(self.feature_map_size * 8, self.feature_map_size * 4, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(self.feature_map_size * 4),
-            nn.LeakyReLU(-0.2),
-
-            # (feature_map_size * 4) x 16 x 16 -> (feature_map_size * 2) x 32 x 32
-            nn.ConvTranspose2d(self.feature_map_size * 4, self.feature_map_size * 2, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(self.feature_map_size * 2),
-            nn.LeakyReLU(-0.2),
-
-            # (feature_map_size * 2) x 32 x 32 -> img_channels x 64 x 64
-            nn.ConvTranspose2d(self.feature_map_size * 2, self.img_channels, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.Tanh()
-        )
+        self.blocks = nn.ModuleList([
+            # (latent_dim) -> (feature_map_size * 8) x 4 x 4
+            nn.Sequential(
+                nn.ConvTranspose2d(self.latent_dim, self.feature_map_size * 8, kernel_size=4, stride=1, padding=0, bias=False),
+                nn.BatchNorm2d(self.feature_map_size * 8),
+                nn.LeakyReLU(-0.2),
+            ),
+            
+            # (feature_map_size * 8) x 4 x 4 -> (feature_map_size * 4) x 8 x 8
+            nn.Sequential(
+                nn.ConvTranspose2d(self.feature_map_size * 8, self.feature_map_size * 4, kernel_size=4, stride=2, padding=1, bias=False),
+                nn.BatchNorm2d(self.feature_map_size * 4),
+                nn.LeakyReLU(-0.2),
+            ),
+            
+            # (feature_map_size * 4) x 8 x 8 -> (feature_map_size * 2) x 16 x 16
+            nn.Sequential(
+                nn.ConvTranspose2d(self.feature_map_size * 4, self.feature_map_size * 2, kernel_size=4, stride=2, padding=1, bias=False),
+                nn.BatchNorm2d(self.feature_map_size * 2),
+                nn.LeakyReLU(-0.2),
+            ),
+            
+            # (feature_map_size * 2) x 16 x 16 -> (feature_map_size * 1) x 32 x 32
+            nn.Sequential(
+                nn.ConvTranspose2d(self.feature_map_size * 2, self.feature_map_size * 1, kernel_size=4, stride=2, padding=1, bias=False),
+                nn.BatchNorm2d(self.feature_map_size * 1),
+                nn.LeakyReLU(-0.2),
+            ),
+            
+            # (feature_map_size * 1) x 32 x 32 -> img_channels x 64 x 64
+            nn.ConvTranspose2d(self.feature_map_size * 1, self.img_channels, kernel_size=4, stride=2, padding=1, bias=False)
+        ])
+        
+        self.adapters = nn.ModuleList([
+            # img_channels -> img_channels
+            nn.Conv2d(self.feature_map_size * 8, self.img_channels, kernel_size=1, stride=1, padding=0),
+            
+            # img_channels -> feature_map_size * 1
+            nn.Conv2d(self.feature_map_size * 4, self.img_channels, kernel_size=1, stride=1, padding=0),
+            
+            # img_channels -> feature_map_size * 2
+            nn.Conv2d(self.feature_map_size * 2, self.img_channels, kernel_size=1, stride=1, padding=0),
+            
+            # img_channels -> feature_map_size * 4
+            nn.Conv2d(self.feature_map_size * 1, self.img_channels, kernel_size=1, stride=1, padding=0),
+            
+            # img_channels -> feature_map_size * 8
+            nn.Identity()
+        ])
+        
+        self.register_buffer('block_number', torch.tensor(1))
         
     def forward(self, x):
         x = x.view(x.size(0), self.latent_dim, 1, 1)
-        return self.model(x)
+        for i in range(self.get_buffer('block_number')):
+            x = self.blocks[i](x)
+        
+        x = self.adapters[self.block_number-1](x)
+        
+        return x
+    
+    def set_num_blocks(self, n):
+        self.block_number = torch.tensor(n)
+    
+    @property
+    def max_blocks(self):
+        return 5
     
 @discs_registry.add_to_registry(name="wasserstain_critic")
 class WasserstainCritic(nn.Module):
@@ -135,26 +173,65 @@ class WasserstainCritic(nn.Module):
         self.feature_map_size = model_config.hidden_dim
         self.img_channels = 3
         
-        self.model = nn.Sequential(
+        self.blocks = nn.ModuleList([
             # img_channels x 64 x 64 -> (feature_map_size) x 32 x 32
-            nn.Conv2d(self.img_channels, self.feature_map_size, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.2, inplace=True),
-
+            nn.Sequential(
+                nn.Conv2d(self.img_channels, self.feature_map_size, kernel_size=4, stride=2, padding=1),
+                nn.LeakyReLU(0.2, inplace=True),
+            ),
+            
             # (feature_map_size) x 32 x 32 -> (feature_map_size * 2) x 16 x 16
-            nn.Conv2d(self.feature_map_size, self.feature_map_size * 2, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.2, inplace=True),
-
+            nn.Sequential(
+                nn.Conv2d(self.feature_map_size, self.feature_map_size * 2, kernel_size=4, stride=2, padding=1),
+                nn.LeakyReLU(0.2, inplace=True),
+            ),
+            
             # (feature_map_size * 2) x 16 x 16 -> (feature_map_size * 4) x 8 x 8
-            nn.Conv2d(self.feature_map_size * 2, self.feature_map_size * 4, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.Sequential(
+                nn.Conv2d(self.feature_map_size * 2, self.feature_map_size * 4, kernel_size=4, stride=2, padding=1),
+                nn.LeakyReLU(0.2, inplace=True),
+            ),
 
             # (feature_map_size * 4) x 8 x 8 -> (feature_map_size * 8) x 4 x 4
+            nn.Sequential(
             nn.Conv2d(self.feature_map_size * 4, self.feature_map_size * 8, kernel_size=4, stride=2, padding=1),
             nn.LeakyReLU(0.2, inplace=True),
-
+            ),
+            
             # (feature_map_size * 8) x 4 x 4 -> 1 x 1 x 1 (скаляр)
             nn.Conv2d(self.feature_map_size * 8, 1, kernel_size=4, stride=1, padding=0)
-        )
+        ])
+        
+        self.adapters = nn.ModuleList([
+            # img_channels -> img_channels
+            nn.Identity(),
+            
+            # img_channels -> feature_map_size * 1
+            nn.Conv2d(self.img_channels, self.feature_map_size * 1, kernel_size=1, stride=1, padding=0),
+            
+            # img_channels -> feature_map_size * 2
+            nn.Conv2d(self.img_channels, self.feature_map_size * 2, kernel_size=1, stride=1, padding=0),
+            
+            # img_channels -> feature_map_size * 4
+            nn.Conv2d(self.img_channels, self.feature_map_size * 4, kernel_size=1, stride=1, padding=0),
+            
+            # img_channels -> feature_map_size * 8
+            nn.Conv2d(self.img_channels, self.feature_map_size * 8, kernel_size=1, stride=1, padding=0),
+        ])
+        
+        self.register_buffer('block_number', torch.tensor(1))
     
     def forward(self, x):
-        return self.model(x).squeeze()
+        x = self.adapters[self.max_blocks - self.block_number](x)
+        
+        for i in range(self.max_blocks - self.block_number, self.max_blocks):
+            x = self.blocks[i](x)
+        
+        return x.squeeze()
+    
+    def set_num_blocks(self, n):
+        self.block_number = torch.tensor(n)
+    
+    @property
+    def max_blocks(self):
+        return 5

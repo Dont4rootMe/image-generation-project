@@ -21,6 +21,7 @@ class FID:
             input2=synt_pth,
             kid_subset_size=8,
             cuda=(device == "cuda"),
+            verbose=False,
             isc=True,  # Inception Score не требуется
             fid=True,  # FID не требуется
             kid=True,  # Вычисление KID

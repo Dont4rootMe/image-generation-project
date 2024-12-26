@@ -26,7 +26,7 @@ class BaseTrainer:
         self.config = config
 
         self.device = config.exp.device
-        self.start_step = config.train.start_step
+        self.start_step = config.train.proccessing.proccessing.start_step
         self.step = 0
 
         if config.train.use_amp:
@@ -145,21 +145,21 @@ class BaseTrainer:
     def training_loop(self):
         self.to_train()
 
-        for self.step in tqdm.trange(self.start_step, self.config.train.steps + 1, desc="Training"):
+        for self.step in tqdm.trange(self.start_step, self.config.train.proccessing.steps + 1, desc="Training"):
             losses_dict = self.train_step()
             self.logger.update_losses(losses_dict)
 
-            if self.step % self.config.train.val_step == 0:
+            if self.step % self.config.train.proccessing.val_step == 0:
                 val_metrics_dict, images = self.validate()
 
                 self.logger.log_val_metrics(val_metrics_dict, step=self.step)
                 self.logger.log_batch_of_images(images, step=self.step, images_type="validation")
                 self.logger.log_model_parameters(self.get_modules_dict(), step=self.step)
                 
-            if self.step % self.config.train.log_step == 0:
+            if self.step % self.config.train.proccessing.log_step == 0:
                 self.logger.log_train_losses(self.step)
 
-            if self.step % self.config.train.checkpoint_step == 0:
+            if self.step % self.config.train.proccessing.checkpoint_step == 0:
                 self.save_checkpoint()
                 
         # delete temporal dir with images for validation

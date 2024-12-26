@@ -26,19 +26,31 @@ data:
 
 train:
     checkpoint_path: null
-    trainer: wasserstain_gan_trainer
-    generator: wasserstain_gen
-    critic: wasserstain_critic
-    gen_optimizer: adam
-    critic_optimizer: rmsprop
-    add_noise: True
+    models:
+        trainer: wasserstain_gan_trainer
+        generator: wasserstain_gen
+        critic: wasserstain_critic
+        gen_optimizer: adam
+        critic_optimizer: rmsprop
+
+    noise:
+        add_noise: True
+        start_noise_std: 0.1
+
+    fade_in:
+        use_fade_in: True
+        start_from: 1
+        lvl_fraction: [0.05, 0.1, 0.2, 0.2, 0.45]
+
+    proccessing:
+        start_step: 0
+        steps: 300000
+        log_step: 500
+        checkpoint_step: 15000
+        val_step: 15000
+
     use_amp: True
     val_metrics: ["fid/isc/kid", "ms-ssim"]
-    start_step: 0
-    steps: 300000
-    log_step: 500
-    checkpoint_step: 15000
-    val_step: 15000
 
 generator_args:
     z_dim: 128

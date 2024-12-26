@@ -13,8 +13,10 @@ pillow = "*"
 tqdm = "*"
 torchmetrics = "*"
 torch-fidelity = "*"
+matplotlib = "*"
 
 [dev-packages]
+ipykernel = "*"
 
 [requires]
 python_version = "3.11"

@@ -54,9 +54,9 @@ class BaseDataset(Dataset):
             # then calculate them from data
             self.mean, self.std = self.get_normalization_params(samples_to_normalize)
             
-            print(f'''Normalization: 
-                        mean=[{self.mean[0].item()}, {self.mean[1].item()}, {self.std[2].item()}], 
-                        std=[{self.mean[0].item()}, {self.std[1].item()}, {self.std[2].item()}]''')
+            print(f'Normalization:')
+            print(f'\tmean=[{self.mean[0].item()}, {self.mean[1].item()}, {self.std[2].item()}]')
+            print(f'\t std=[{self.mean[0].item()}, {self.std[1].item()}, {self.std[2].item()}]')
 
     def __getitem__(self, ind):
         path = self.paths[ind]
