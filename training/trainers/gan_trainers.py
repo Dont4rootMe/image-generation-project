@@ -244,12 +244,12 @@ class WasserstainGANTrainer(BaseTrainer):
                 self.critic.block_number = new_lavel
 
             # get synthetic images via generator
-            z = torch.normal(0, 1, (self.config.data.train_batch_size, self.config.generator_args.z_dim), device=self.device)
+            z = torch.normal(0, 1, (real_images.size(0), self.config.generator_args.z_dim), device=self.device)
             fake_images = self.generator(z)
 
             # create interpolated images
             batch_size = real_images.size(0)
-            epsilon = torch.rand(batch_size, 1, 1, 1, device=real_images.device)
+            epsilon = torch.rand(real_images.size(0), 1, 1, 1, device=real_images.device)
             interpolated_data = epsilon * real_images + (1 - epsilon) * fake_images
             interpolated_data.requires_grad_(True)
 
