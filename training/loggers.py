@@ -100,6 +100,7 @@ class TrainingLogger:
         """
         # logging generator weights and gradients
         for name, param in modules['gen'].named_parameters():
+            if 'adapters' in name: continue
             if param.requires_grad:
                 wandb.log({
                     f"generator_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
@@ -111,6 +112,7 @@ class TrainingLogger:
         if 'disc' in modules:
             # logging discriminator weights
             for name, param in  modules['disc'].named_parameters():
+                if 'adapters' in name: continue
                 if param.requires_grad:
                     wandb.log({
                         f"discriminator_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
@@ -121,6 +123,7 @@ class TrainingLogger:
         else:
             # logging critic weights and gradients
             for name, param in  modules['critic'].named_parameters():
+                if 'adapters' in name: continue
                 if param.requires_grad:
                     wandb.log({
                         f"critic_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
