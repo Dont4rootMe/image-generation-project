@@ -1,5 +1,5 @@
 exp:
-    exp_dir: experiments/wasserstain_gan
+    exp_dir: experiments/wasserstain_gan_small
     device: cuda 
     seed: 777
     use_wandb: True
@@ -10,8 +10,8 @@ wandb:
     run_id: null
     entity: artem-fm
     project: gan
-    run_name: wasserstain_gan_test
-    tags: ["gan", "base"]
+    run_name: wasserstain_gan_small
+    tags: ["gan", "wasserstain", "small"]
 
 data:
     dataset_name: base_dataset
@@ -19,6 +19,8 @@ data:
     input_val_dir: data/food_data/test
     normalize_data: True
     samples_to_normalize: null
+    norm_mean: [0.5, 0.5, 0.5]
+    norm_std: [0.5, 0.5, 0.5]
     train_batch_size: 8
     val_batch_size: 8
     n_save_images: 64
@@ -53,17 +55,18 @@ train:
     val_metrics: ["fid/isc/kid", "ms-ssim"]
 
 generator_args:
-    z_dim: 256
-    hidden_dim: 256
+    z_dim: 100
+    hidden_dim: 64
+    add_tanh: True
 
 critic_args:
-    hidden_dim: 256
+    hidden_dim: 64
 
 gen_optimizer_args:
-    lr: 0.0001
+    lr: 0.001
 
 critic_optimizer_args:
-    lr: 0.0001
+    lr: 0.001
     momentum: 0.1
 
 gen_losses:

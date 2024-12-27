@@ -43,6 +43,9 @@ class BaseDataset(Dataset):
 
         # otherwise if mean and std are provided then use them
         elif mean is not None and std is not None:
+            mean = torch.tensor(mean) if isinstance(mean, list) or isinstance(mean, np.ndarray) else mean.detach().clone()
+            std  = torch.tensor(std)  if isinstance(std, list)  or isinstance(std, np.ndarray)  else std.detach().clone()
+
             self.mean = mean.detach().clone()
             self.std = std.detach().clone()
 

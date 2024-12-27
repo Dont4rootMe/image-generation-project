@@ -147,6 +147,8 @@ class WasserstainGenerator(nn.Module):
             nn.Identity()
         ])
         
+        self.out = nn.Tanh() if 'add_tanh' in model_config and model_config.add_tanh else nn.Identity()
+        
         self.register_buffer('block_number', torch.tensor(1))
         
     def forward(self, x):
@@ -156,7 +158,7 @@ class WasserstainGenerator(nn.Module):
         
         x = self.adapters[self.block_number-1](x)
         
-        return x
+        return self.out(x)
     
     def set_num_blocks(self, n):
         self.block_number = torch.tensor(n)

@@ -1,0 +1,77 @@
+exp:
+    exp_dir: experiments/wasserstain_gan
+    device: cuda 
+    seed: 777
+    use_wandb: True
+    model_type: gan
+
+wandb:
+    WANDB_KEY: null
+    run_id: null
+    entity: artem-fm
+    project: gan
+    run_name: wasserstain_gan_large
+    tags: ["gan", "wasserstain", "large"]
+
+data:
+    dataset_name: base_dataset
+    input_train_dir: data/food_data/train
+    input_val_dir: data/food_data/test
+    normalize_data: True
+    samples_to_normalize: null
+    train_batch_size: 8
+    val_batch_size: 8
+    n_save_images: 64
+    workers: 8
+
+train:
+    checkpoint_path: null
+    models:
+        trainer: wasserstain_gan_trainer
+        generator: wasserstain_gen
+        critic: wasserstain_critic
+        gen_optimizer: adam
+        critic_optimizer: rmsprop
+
+    noise:
+        add_noise: True
+        start_noise_std: 0.1
+
+    fade_in:
+        use_fade_in: False
+        start_from: 1
+        lvl_fraction: [0.1, 0.1, 0.1, 0.2, 0.5]
+
+    proccessing:
+        start_step: 0
+        steps: 1600000
+        log_step: 200
+        checkpoint_step: 15000
+        val_step: 15000
+
+    use_amp: True
+    val_metrics: ["fid/isc/kid", "ms-ssim"]
+
+generator_args:
+    z_dim: 256
+    hidden_dim: 256
+    add_tanh: False
+
+critic_args:
+    hidden_dim: 256
+
+gen_optimizer_args:
+    lr: 0.0001
+
+critic_optimizer_args:
+    lr: 0.0001
+    momentum: 0.1
+
+gen_losses:
+    wasserstain_gen: 1.0
+
+disc_losses:
+    wasserstain_critic: 1.0
+    wasserstein_gp: 10.0
+
+loss_args: []

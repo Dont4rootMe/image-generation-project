@@ -112,6 +112,19 @@ class BaseTrainer:
             transforms.ToTensor(),
             transforms.Resize((64, 64))
         ])
+        
+        if 'norm_mean' in self.config.data and self.config.data.norm_mean is not None:
+            assert len(self.config.data.norm_mean) == 3
+            mean = self.config.data.norm_mean
+        else:
+            mean = None
+            
+        if 'norm_std' in self.config.data and self.config.data.norm_std is not None:
+            assert len(self.config.data.norm_std) == 3
+            std = self.config.data.norm_std
+        else:
+            std = None
+            
 
         # prepare train dataset
         self.train_dataset = datasets_registry[self.config.data.dataset_name](
