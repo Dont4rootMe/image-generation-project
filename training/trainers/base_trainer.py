@@ -115,13 +115,13 @@ class BaseTrainer:
         
         if 'norm_mean' in self.config.data and self.config.data.norm_mean is not None:
             assert len(self.config.data.norm_mean) == 3
-            mean = self.config.data.norm_mean
+            mean = list(self.config.data.norm_mean)
         else:
             mean = None
             
         if 'norm_std' in self.config.data and self.config.data.norm_std is not None:
             assert len(self.config.data.norm_std) == 3
-            std = self.config.data.norm_std
+            std = list(self.config.data.norm_std)
         else:
             std = None
             
@@ -131,7 +131,7 @@ class BaseTrainer:
             self.config.data.input_train_dir, transformers,
             samples_to_normalize=self.config.data.samples_to_normalize,
             normalize_data=self.config.data.normalize_data,
-            mean=None, std=None
+            mean=mean, std=std
         )
         
         # get size of test

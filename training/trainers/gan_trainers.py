@@ -357,14 +357,14 @@ class WasserstainGANTrainer(BaseTrainer):
         if self.config.data.n_save_images is not None:
             # get random samples from generated images
             indexes = torch.as_tensor(np.random.choice(generated_images.size(0), self.config.data.n_save_images))
-            sampled_images = generated_images[indexes.to(generated_images.device)]
+            sampled_images = generated_images[indexes.to(generated_images.device)] * std[:, None, None] - mean[:, None, None]
             
             # save each
             for i in range(len(sampled_images)):
                 image_path = path_to_saved_pics / f"generated_image_{i + 1}.png"
-                save_image(sampled_images[i] * std[:, None, None] - mean[:, None, None], image_path)
+                save_image(sampled_images[i], image_path)
         else:
             indexes = torch.as_tensor(np.random.choice(generated_images.size(0), 16))
-            sampled_images = generated_images[indexes.to(generated_images.device)]
+            sampled_images = generated_images[indexes.to(generated_images.device)] * std[:, None, None] - mean[:, None, None]
 
         return sampled_images, path_validation
