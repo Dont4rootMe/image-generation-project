@@ -25,7 +25,7 @@ class BaseDataset(Dataset):
             mean.append(np.array(image).mean((1, 2)))
             std.append(np.array(image).std((1, 2)))
 
-        return np.mean(mean, axis=0), np.mean(std, axis=0)
+        return torch.tensor(np.mean(mean, axis=0)), torch.tensor(np.mean(std, axis=0))
 
     def __init__(self,
                  root,

@@ -191,6 +191,10 @@ class WasserstainGANTrainer(BaseTrainer):
     def setup_models(self):
         self.generator = gens_registry['wasserstain_gen'](self.config.generator_args).to(self.device)
         self.critic = discs_registry['wasserstain_critic'](self.config.critic_args).to(self.device)
+        
+        if not ('fade_in' in self.config.train and self.config.train.fade_in.use_fade_in):
+            self.generator.set_num_blocks(self.generator.max_blocks)
+            self.critic.set_num_blocks(self.critic.max_blocks)
 
         if self.config.train.checkpoint_path is not None:
             self.generator.load_model(self.checkpoint_path / 'generator.pth')
@@ -240,8 +244,6 @@ class WasserstainGANTrainer(BaseTrainer):
             # apply fade in scheduler
             if self.config.train.fade_in.use_fade_in:
                 real_images, new_lavel = self.fade_in_scheduler(real_images, self.step)
-                self.generator.block_number = new_lavel
-                self.critic.block_number = new_lavel
 
             # get synthetic images via generator
             z = torch.normal(0, 1, (real_images.size(0), self.config.generator_args.z_dim), device=self.device)
@@ -261,6 +263,10 @@ class WasserstainGANTrainer(BaseTrainer):
                 'interpolated_preds': self.critic(interpolated_data),
                 'batch_size': batch_size
             }
+            
+            if self.config.train.fade_in.use_fade_in:
+                self.generator.block_number = new_lavel
+                self.critic.block_number = new_lavel
 
             # Compute loss of the discriminator
             total_loss_disc, loss_dict_disc = self.loss_builder.calculate_loss(preds_dict, loss_type='critic')
