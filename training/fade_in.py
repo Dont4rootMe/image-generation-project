@@ -21,11 +21,16 @@ class FadeInScheduler:
             3: partial(F.interpolate, size=(32, 32), mode='bilinear', align_corners=True),
             4: torch.nn.Identity()
         }
+        
+    def check_step(self, step):
+        curr_level = torch.sum(self.tresholds < step).item() + self.start_from
+
+        return curr_level
 
     def __call__(self, real_images, step):
-        curr_level = torch.sum(self.tresholds < step).item()
-        scaled_images = self.adapters[curr_level + self.start_from - 1](real_images)
+        curr_level = torch.sum(self.tresholds < step).item() + self.start_from
+        scaled_images = self.adapters[curr_level - 1](real_images)
         
         next_level = torch.sum(self.tresholds < step + 1) + self.start_from
-        
+
         return scaled_images, next_level

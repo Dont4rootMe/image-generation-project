@@ -194,18 +194,18 @@ class WasserstainGANTrainer(BaseTrainer):
         self.generator = gens_registry['wasserstain_gen'](self.config.generator_args).to(self.device)
         self.critic = discs_registry['wasserstain_critic'](self.config.critic_args).to(self.device)
         
+        # load models if checkpoint paath is provided
+        if self.config.train.checkpoint_path is not None:
+            self.generator.load_model(self.checkpoint_path / 'generator.pth')
+            self.critic.load_model(self.checkpoint_path / 'critic.pth')
+
         # if fade in is off then use whole model
         if not ('fade_in' in self.config.train and self.config.train.fade_in.use_fade_in):
             self.generator.set_num_blocks(self.generator.max_blocks)
             self.critic.set_num_blocks(self.critic.max_blocks)
         else:
-            self.generator.set_num_blocks(self.config.train.fade_in.start_from)
-            self.critic.set_num_blocks(self.config.train.fade_in.start_from)
-        
-        # load models if checkpoint paath is provided
-        if self.config.train.checkpoint_path is not None:
-            self.generator.load_model(self.checkpoint_path / 'generator.pth')
-            self.critic.load_model(self.checkpoint_path / 'critic.pth')
+            self.generator.set_num_blocks(self.fade_in_scheduler.check_step(self.start_step))
+            self.critic.set_num_blocks(self.fade_in_scheduler.check_step(self.start_step))
 
     def setup_optimizers(self):
         self.generator_optimizer = optimizers_registry[self.config.train.models.gen_optimizer](
