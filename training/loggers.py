@@ -22,9 +22,6 @@ class WandbLogger:
                 "id": wandb_run_id,
                 "entity": config.wandb.entity,
                 "project": config.wandb.project,
-                "name": config.wandb.run_name,
-                "tags": config.wandb.tags,
-                "config": OmegaConf.to_container(config),
                 "resume": "must",
             }
         else:
@@ -34,9 +31,10 @@ class WandbLogger:
                 print(f"Wandb run id: {wandb_run_id}")
                 with open(f"{config.exp_dir}/wandb_run_id.txt", "w") as file:
                     file.write(wandb_run_id)
+                    file.flush()
 
             self.wandb_args = {
-                "id": wandb.util.generate_id(),
+                "id": wandb_run_id,
                 "entity": config.wandb.entity,
                 "project": config.wandb.project,
                 "name": config.wandb.run_name,
@@ -135,17 +133,17 @@ class TrainingLogger:
         # logging hyperparameters and states of optimizers
         if 'disc' in modules:    
             wandb.log({
-                "generator_lr": modules['optimizer_gan'].param_groups[0]['lr'],
-                "discriminator_lr": modules['optimizer_disc'].param_groups[0]['lr'],
-                "generator_weight_decay": modules['optimizer_gan'].param_groups[0].get('weight_decay', 0),
-                "discriminator_weight_decay": modules['optimizer_disc'].param_groups[0].get('weight_decay', 0)
+                "hyperparam/generator_lr": modules['optimizer_gan'].param_groups[0]['lr'],
+                "hyperparam/discriminator_lr": modules['optimizer_disc'].param_groups[0]['lr'],
+                "hyperparam/generator_weight_decay": modules['optimizer_gan'].param_groups[0].get('weight_decay', 0),
+                "hyperparam/discriminator_weight_decay": modules['optimizer_disc'].param_groups[0].get('weight_decay', 0)
             }, step=step)
         else:
             wandb.log({
-                "generator_lr": modules['optimizer_gan'].param_groups[0]['lr'],
-                "critic_lr": modules['optimizer_critic'].param_groups[0]['lr'],
-                "generator_weight_decay": modules['optimizer_gan'].param_groups[0].get('weight_decay', 0),
-                "critic_weight_decay": modules['optimizer_critic'].param_groups[0].get('weight_decay', 0)
+                "hyperparam/generator_lr": modules['optimizer_gan'].param_groups[0]['lr'],
+                "hyperparam/critic_lr": modules['optimizer_critic'].param_groups[0]['lr'],
+                "hyperparam/generator_weight_decay": modules['optimizer_gan'].param_groups[0].get('weight_decay', 0),
+                "hyperparam/critic_weight_decay": modules['optimizer_critic'].param_groups[0].get('weight_decay', 0)
             }, step=step)
         
         

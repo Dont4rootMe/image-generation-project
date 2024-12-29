@@ -8,7 +8,7 @@ class NoiseScheduler:
             s: float = 0.2, 
             e: float = 1.0, 
             tau: float = 2.0, 
-            clip_min=1e-3
+            stop_noise_on: float = 0.75
     ):
         """
         On the Importance of Noise Scheduling for Diﬀusion Models 
@@ -19,10 +19,15 @@ class NoiseScheduler:
         self.s = s
         self.e = e
         self.tau = tau
-        self.clip_min = clip_min
+        self.stop_noise = stop_noise_on
+        
+        self.break_treshold = self.num_steps * self.stop_noise
 
     def __call__(self, images, step):
-        t = step / self.num_steps
+        if step > self.break_treshold:
+            return images
+        
+        t = step / (self.num_steps * self.stop_noise)
         v_start = math.cos(self.s * math.pi / 2) ** (2 * self.tau)
         v_end = math.cos(self.e * math.pi / 2) ** (2 * self.tau)
         gamma = math.cos((t * (self.e - self.s) + self.s) * math.pi / 2) ** (2 * self.tau)

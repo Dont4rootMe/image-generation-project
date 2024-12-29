@@ -28,9 +28,9 @@ class FID:
         )
 
         return {
-            'inception_score (isc)': metrics['inception_score_mean'],
-            'frechet_inception_distance (fid)': metrics['frechet_inception_distance'],
-            'kernel_inception_distance (kid)': metrics['kernel_inception_distance_mean']
+            'metric/inception_score (isc)': metrics['inception_score_mean'],
+            'metric/frechet_inception_distance (fid)': metrics['frechet_inception_distance'],
+            'metric/kernel_inception_distance (kid)': metrics['kernel_inception_distance_mean']
         }
 
 @metrics_registry.add_to_registry(name="ms-ssim")
@@ -62,4 +62,4 @@ class MS_SSIM:
             for fake_file in fake_images_files
         ], dim=0)
 
-        return {'ms-ssim': ms_ssim(fake_imgs, real_imgs)}
+        return {'metric/ms-ssim': ms_ssim(fake_imgs, real_imgs)}

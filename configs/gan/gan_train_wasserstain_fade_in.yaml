@@ -1,5 +1,5 @@
 exp:
-    exp_dir: experiments/wasserstain_gan_small
+    exp_dir: experiments/wasserstain_gan_fade_in
     device: cuda 
     seed: 777
     use_wandb: True
@@ -10,8 +10,8 @@ wandb:
     run_id: null
     entity: artem-fm
     project: gan
-    run_name: wasserstain_gan_small
-    tags: ["gan", "wasserstain", "small"]
+    run_name: wasserstain_gan_fade_in
+    tags: ["gan", "wasserstain", "small", "no_noise", "fade_in"]
 
 data:
     dataset_name: base_dataset
@@ -27,25 +27,25 @@ data:
     workers: 8
 
 train:
-    checkpoint_path: /home/ubuntu/image-generation-project/experiments/wasserstain_gan_small/checkpoints
+    checkpoint_path: /home/ubuntu/image-generation-project/experiments/wasserstain_gan_fade_in/checkpoints
     models:
         trainer: wasserstain_gan_trainer
         generator: wasserstain_gen
         critic: wasserstain_critic
-        gen_optimizer: adam
+        gen_optimizer: adamW
         critic_optimizer: rmsprop
 
     noise:
-        add_noise: True
+        add_noise: False
         start_noise_std: 0.18
 
     fade_in:
-        use_fade_in: False
-        start_from: 1
-        lvl_fraction: [0.1, 0.1, 0.1, 0.2, 0.5]
+        use_fade_in: True
+        start_from: 3
+        lvl_fraction: [0.2, 0.3, 0.5]
 
     proccessing:
-        start_step: 765000
+        start_step: 0
         steps: 2000000
         log_step: 200
         checkpoint_step: 15000

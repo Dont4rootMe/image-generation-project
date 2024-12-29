@@ -85,15 +85,18 @@ class BaseTrainer:
 
         # create dir for checkpoint dumps in experiment dir
         self.save_path = self.experiment_dir / 'checkpoints'
-        self.save_path.mkdir(parents=True, exist_ok=True)
+        if self.config.train.checkpoint_path is None:
+            self.save_path.mkdir(parents=True, exist_ok=True)
 
         # create dir for image logging in experiment dir
         self.image_path = self.experiment_dir / 'images'
-        self.image_path.mkdir(parents=True, exist_ok=True)
+        if self.config.train.checkpoint_path is None:
+            self.image_path.mkdir(parents=True, exist_ok=True)
 
         # create dir for inference image generation
         self.inference_path = self.image_path / 'inference'
-        self.inference_path.mkdir(parents=True, exist_ok=True)
+        if self.config.train.checkpoint_path is None:
+            self.inference_path.mkdir(parents=True, exist_ok=True)
         
         # create dir for validation image generation
         self.all_validation_images = np.asarray(glob(self.config.data.input_val_dir + '/*/*.jpg'))
@@ -166,7 +169,7 @@ class BaseTrainer:
                 self.logger.log_model_parameters(self.get_modules_dict(), step=self.step)
 
                 val_metrics_dict, images = self.validate()
-                self.logger.log_batch_of_images(images, step=self.step, images_type="validation")
+                self.logger.log_batch_of_images(images, step=self.step, images_type="validation_imgs")
                 self.logger.log_val_metrics(val_metrics_dict, step=self.step)
                 
             if self.step % self.config.train.proccessing.log_step == 0:

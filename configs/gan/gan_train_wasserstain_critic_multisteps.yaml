@@ -1,5 +1,5 @@
 exp:
-    exp_dir: experiments/wasserstain_gan_small
+    exp_dir: experiments/wasserstain_gan_critic_multisteps
     device: cuda 
     seed: 777
     use_wandb: True
@@ -10,8 +10,8 @@ wandb:
     run_id: null
     entity: artem-fm
     project: gan
-    run_name: wasserstain_gan_small
-    tags: ["gan", "wasserstain", "small"]
+    run_name: wasserstain_gan_critic_multisteps
+    tags: ["gan", "wasserstain", "small", "multistep_critic"]
 
 data:
     dataset_name: base_dataset
@@ -27,17 +27,19 @@ data:
     workers: 8
 
 train:
-    checkpoint_path: /home/ubuntu/image-generation-project/experiments/wasserstain_gan_small/checkpoints
+    checkpoint_path: /home/ubuntu/image-generation-project/experiments/wasserstain_gan_critic_multisteps/checkpoints
     models:
         trainer: wasserstain_gan_trainer
         generator: wasserstain_gen
         critic: wasserstain_critic
-        gen_optimizer: adam
+        gen_optimizer: adamW
         critic_optimizer: rmsprop
+        generator_ministeps: 1
+        critic_ministeps: 3
 
     noise:
         add_noise: True
-        start_noise_std: 0.18
+        start_noise_std: 0.1
 
     fade_in:
         use_fade_in: False
@@ -45,7 +47,7 @@ train:
         lvl_fraction: [0.1, 0.1, 0.1, 0.2, 0.5]
 
     proccessing:
-        start_step: 765000
+        start_step: 0
         steps: 2000000
         log_step: 200
         checkpoint_step: 15000

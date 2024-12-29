@@ -26,6 +26,6 @@ class FadeInScheduler:
         curr_level = torch.sum(self.tresholds < step).item()
         scaled_images = self.adapters[curr_level + self.start_from - 1](real_images)
         
-        next_level = torch.sum(self.tresholds < step + 1) + 1
+        next_level = torch.sum(self.tresholds < step + 1) + self.start_from
         
         return scaled_images, next_level

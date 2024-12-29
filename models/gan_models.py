@@ -167,6 +167,11 @@ class WasserstainGenerator(nn.Module):
     def max_blocks(self):
         return 5
     
+    def load_model(self, path):
+        assert os.path.exists(path), f'Wasserstain Generator model weights were not found on path {path}'
+        self.load_state_dict(torch.load(path))
+        return self
+    
 @discs_registry.add_to_registry(name="wasserstain_critic")
 class WasserstainCritic(nn.Module):
     def __init__(self, model_config):
@@ -237,3 +242,8 @@ class WasserstainCritic(nn.Module):
     @property
     def max_blocks(self):
         return 5
+    
+    def load_model(self, path):
+        assert os.path.exists(path), f'Wasserstain Critic model weights were not found on path {path}'
+        self.load_state_dict(torch.load(path))
+        return self
