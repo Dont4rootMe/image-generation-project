@@ -25,11 +25,12 @@ class WandbLogger:
                 "resume": "must",
             }
         else:
+            print()
             # create new wandb run and save args, config and etc.
-            if 'run_name' not in config.wandb or config.wandb.run_name is None:
+            if 'run_id' not in config.wandb or config.wandb.run_id is None:
                 wandb_run_id = wandb.util.generate_id()
                 print(f"Wandb run id: {wandb_run_id}")
-                with open(f"{config.exp_dir}/wandb_run_id.txt", "w") as file:
+                with open(f"{config.exp.exp_dir}/wandb_run_id.txt", "w") as file:
                     file.write(wandb_run_id)
                     file.flush()
 
@@ -96,54 +97,68 @@ class TrainingLogger:
         """
         Logging parameters of models and optimizers
         """
-        # logging generator weights and gradients
-        for name, param in modules['gen'].named_parameters():
-            if 'adapters' in name: continue
-            if param.requires_grad:
+        if 'gen' in modules:
+            # logging generator weights and gradients
+            for name, param in modules['gen'].named_parameters():
+                if 'adapters' in name: continue
+                if param.requires_grad:
+                    wandb.log({
+                        f"generator_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
+                    }, step=step)
+                    # wandb.log({
+                    #     f"generator_gradients/{name}": wandb.Histogram(param.grad.data.cpu().numpy())
+                    # }, step=step)
+
+            if 'disc' in modules:
+                # logging discriminator weights
+                for name, param in  modules['disc'].named_parameters():
+                    if 'adapters' in name: continue
+                    if param.requires_grad:
+                        wandb.log({
+                            f"discriminator_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
+                        }, step=step)
+                        # wandb.log({
+                        #     f"discriminator_gradients/{name}": wandb.Histogram(param.grad.data.cpu().numpy())
+                        # }, step=step)
+            else:
+                # logging critic weights and gradients
+                for name, param in  modules['critic'].named_parameters():
+                    if 'adapters' in name: continue
+                    if param.requires_grad:
+                        wandb.log({
+                            f"critic_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
+                        }, step=step)
+                        # wandb.log({
+                        #     f"critic_gradients/{name}": wandb.Histogram(param.grad.data.cpu().numpy())
+                        # }, step=step)
+
+            # logging hyperparameters and states of optimizers
+            if 'disc' in modules:    
                 wandb.log({
-                    f"generator_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
+                    "hyperparam/generator_lr": modules['optimizer_gan'].param_groups[0]['lr'],
+                    "hyperparam/discriminator_lr": modules['optimizer_disc'].param_groups[0]['lr'],
+                    "hyperparam/generator_weight_decay": modules['optimizer_gan'].param_groups[0].get('weight_decay', 0),
+                    "hyperparam/discriminator_weight_decay": modules['optimizer_disc'].param_groups[0].get('weight_decay', 0)
                 }, step=step)
-                # wandb.log({
-                #     f"generator_gradients/{name}": wandb.Histogram(param.grad.data.cpu().numpy())
-                # }, step=step)
-
-        if 'disc' in modules:
-            # logging discriminator weights
-            for name, param in  modules['disc'].named_parameters():
-                if 'adapters' in name: continue
+            else:
+                wandb.log({
+                    "hyperparam/generator_lr": modules['optimizer_gan'].param_groups[0]['lr'],
+                    "hyperparam/critic_lr": modules['optimizer_critic'].param_groups[0]['lr'],
+                    "hyperparam/generator_weight_decay": modules['optimizer_gan'].param_groups[0].get('weight_decay', 0),
+                    "hyperparam/critic_weight_decay": modules['optimizer_critic'].param_groups[0].get('weight_decay', 0)
+                }, step=step)
+        else:
+            # logging ddpm weights and gradients
+            for name, param in modules['ddpm'].named_parameters():
                 if param.requires_grad:
                     wandb.log({
-                        f"discriminator_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
+                        f"generator_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
                     }, step=step)
-                    # wandb.log({
-                    #     f"discriminator_gradients/{name}": wandb.Histogram(param.grad.data.cpu().numpy())
-                    # }, step=step)
-        else:
-            # logging critic weights and gradients
-            for name, param in  modules['critic'].named_parameters():
-                if 'adapters' in name: continue
-                if param.requires_grad:
-                    wandb.log({
-                        f"critic_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
-                    }, step=step)
-                    # wandb.log({
-                    #     f"critic_gradients/{name}": wandb.Histogram(param.grad.data.cpu().numpy())
-                    # }, step=step)
 
-        # logging hyperparameters and states of optimizers
-        if 'disc' in modules:    
+            # logging hyperparameters and states of optimizers
             wandb.log({
-                "hyperparam/generator_lr": modules['optimizer_gan'].param_groups[0]['lr'],
-                "hyperparam/discriminator_lr": modules['optimizer_disc'].param_groups[0]['lr'],
-                "hyperparam/generator_weight_decay": modules['optimizer_gan'].param_groups[0].get('weight_decay', 0),
-                "hyperparam/discriminator_weight_decay": modules['optimizer_disc'].param_groups[0].get('weight_decay', 0)
-            }, step=step)
-        else:
-            wandb.log({
-                "hyperparam/generator_lr": modules['optimizer_gan'].param_groups[0]['lr'],
-                "hyperparam/critic_lr": modules['optimizer_critic'].param_groups[0]['lr'],
-                "hyperparam/generator_weight_decay": modules['optimizer_gan'].param_groups[0].get('weight_decay', 0),
-                "hyperparam/critic_weight_decay": modules['optimizer_critic'].param_groups[0].get('weight_decay', 0)
+                "hyperparam/ddpm_lr": modules['optimizer_ddpm'].param_groups[0]['lr'],
+                "hyperparam/ddpm_weight_decay": modules['optimizer_ddpm'].param_groups[0].get('weight_decay', 0),
             }, step=step)
         
         

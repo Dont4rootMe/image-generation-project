@@ -1,5 +1,5 @@
 exp:
-    exp_dir: experiments/wasserstain_gan_no_noise
+    exp_dir: experiments/gan/wasserstain_gan_no_noise
     device: cuda 
     seed: 777
     use_wandb: True

@@ -1,5 +1,5 @@
 exp:
-    exp_dir: experiments/base_gan_test
+    exp_dir: experiments/gan/base_gan_test
     device: cuda
     seed: 777
     use_wandb: True

@@ -1,5 +1,5 @@
 exp:
-    exp_dir: experiments/wasserstain_gan
+    exp_dir: experiments/gan/wasserstain_gan
     device: cuda 
     seed: 777
     use_wandb: True

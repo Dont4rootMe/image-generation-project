@@ -194,7 +194,7 @@ class WasserstainGANTrainer(BaseTrainer):
         self.generator = gens_registry['wasserstain_gen'](self.config.generator_args).to(self.device)
         self.critic = discs_registry['wasserstain_critic'](self.config.critic_args).to(self.device)
         
-        # load models if checkpoint paath is provided
+        # load models if checkpoint path is provided
         if self.config.train.checkpoint_path is not None:
             self.generator.load_model(self.checkpoint_path / 'generator.pth')
             self.critic.load_model(self.checkpoint_path / 'critic.pth')
