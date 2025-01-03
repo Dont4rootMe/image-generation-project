@@ -124,17 +124,17 @@ class BaseGANTrainer(BaseTrainer):
 
     def synthesize_images(self, step=None):
         generated_images = []
-        
+
         for i in range(math.ceil(self.test_size / self.config.data.val_batch_size)):
             z = torch.normal(0, 1, (self.config.data.val_batch_size, self.config.generator_args.z_dim), device=self.device)
 
             with torch.no_grad():
                 gen_ims = self.generator(z).detach().cpu()
-                
+
             generated_images.append(gen_ims)
-        
+
         generated_images = torch.cat(generated_images, dim=0)[:self.test_size]
-        
+
         # revert normalization
         mean = self.data_mean
         std = self.data_std
@@ -149,24 +149,26 @@ class BaseGANTrainer(BaseTrainer):
             if self.config.data.n_save_images is not None:
                 path_to_saved_pics = self.image_path / f"train/step_{step}"
                 path_to_saved_pics.mkdir(parents=True, exist_ok=True)
-            
+
             # clear temporal dir with images for validation
             path_validation = self.image_path / "generative_temp"
-            try: shutil.rmtree(path_validation)
-            except: pass
+            try:
+                shutil.rmtree(path_validation)
+            except:
+                pass
             path_validation.mkdir(parents=True, exist_ok=True)
 
         # save images for validation
         for i in range(len(generated_images)):
             image_path = path_validation / f"generated_image_{i + 1}.png"
             save_image(generated_images[i], image_path, format='png')
-            
+
         # save samples from training step
         if self.config.data.n_save_images is not None:
             # get random samples from generated images
             indexes = torch.as_tensor(np.random.choice(generated_images.size(0), self.config.data.n_save_images))
             sampled_images = generated_images[indexes.to(generated_images.device)]
-            
+
             # save each
             for i in range(len(sampled_images)):
                 image_path = path_to_saved_pics / f"generated_image_{i + 1}.png"
@@ -182,18 +184,17 @@ class BaseGANTrainer(BaseTrainer):
 class WasserstainGANTrainer(BaseTrainer):
     def __init__(self, config):
         super().__init__(config)
-        
+
         if 'noise' in self.config.train and self.config.train.noise.add_noise:
             self.noise_sceduler = NoiseScheduler(self.config.train.noise.start_noise_std, self.config.train.proccessing.steps)
-           
+
         if 'fade_in' in self.config.train and self.config.train.fade_in.use_fade_in:
             self.fade_in_scheduler = FadeInScheduler(self.config.train.proccessing.steps, self.config.train.fade_in)
-        
-    
+
     def setup_models(self):
         self.generator = gens_registry['wasserstain_gen'](self.config.generator_args).to(self.device)
         self.critic = discs_registry['wasserstain_critic'](self.config.critic_args).to(self.device)
-        
+
         # load models if checkpoint path is provided
         if self.config.train.checkpoint_path is not None:
             self.generator.load_model(self.checkpoint_path / 'generator.pth')
@@ -244,24 +245,24 @@ class WasserstainGANTrainer(BaseTrainer):
             discriminator_ministeps = self.config.train.models.critic_ministeps
         else:
             discriminator_ministeps = 1
-        
+
         sum_loss_disc = 0
         sum_loss_gp = 0
         for _ in range(discriminator_ministeps):
             with torch.amp.autocast(enabled=self.config['train']['use_amp'], device_type=self.device):
                 # get real images from dataset
                 real_images = next(self.train_dataloader)['images'].to(self.device)
-                
+
                 # add noise to real samples
                 if self.config.train.noise.add_noise:
                     real_images = self.noise_sceduler(real_images, self.step)
                     if self.config.generator_args.add_tanh:
                         real_images = torch.clamp(real_images, min=-1, max=1)
-                
+
                 # apply fade in scheduler
                 if self.config.train.fade_in.use_fade_in:
                     real_images, new_lavel = self.fade_in_scheduler(real_images, self.step)
-                
+
                 # log some train images after apply of noise and fade in
                 if self.step % self.config.train.proccessing.val_step == 0:
                     mean = self.data_mean
@@ -287,7 +288,7 @@ class WasserstainGANTrainer(BaseTrainer):
                     'interpolated_preds': self.critic(interpolated_data),
                     'batch_size': batch_size
                 }
-                
+
                 if self.config.train.fade_in.use_fade_in:
                     self.generator.block_number = new_lavel
                     self.critic.block_number = new_lavel
@@ -304,7 +305,7 @@ class WasserstainGANTrainer(BaseTrainer):
             else:
                 total_loss_disc.backward()
                 self.critic_optimizer.step()
-            
+
             sum_loss_disc += total_loss_disc.item() / discriminator_ministeps
             sum_loss_gp += loss_dict_disc['wasserstein_gp'] / discriminator_ministeps
 
@@ -313,7 +314,7 @@ class WasserstainGANTrainer(BaseTrainer):
             generator_ministeps = self.config.train.models.generator_ministeps
         else:
             generator_ministeps = 1
-        
+
         sum_loss_gen = 0
         for _ in range(generator_ministeps):
             with torch.amp.autocast(enabled=self.config.train.use_amp, device_type=self.device):
@@ -338,7 +339,7 @@ class WasserstainGANTrainer(BaseTrainer):
             else:
                 total_loss_gen.backward()
                 self.generator_optimizer.step()
-                
+
             sum_loss_gen += total_loss_gen.item() / generator_ministeps
 
         return {
@@ -355,17 +356,17 @@ class WasserstainGANTrainer(BaseTrainer):
 
     def synthesize_images(self, step=None):
         generated_images = []
-        
+
         for i in range(math.ceil(self.test_size / self.config.data.val_batch_size)):
             z = torch.normal(0, 1, (self.config.data.val_batch_size, self.config.generator_args.z_dim), device=self.device)
 
             with torch.no_grad():
                 gen_ims = self.generator(z).detach().cpu()
-                
+
             generated_images.append(gen_ims)
-        
+
         generated_images = torch.cat(generated_images, dim=0)[:self.test_size]
-        
+
         # revert normalization
         mean = self.data_mean
         std = self.data_std
@@ -381,24 +382,26 @@ class WasserstainGANTrainer(BaseTrainer):
             if self.config.data.n_save_images is not None:
                 path_to_saved_pics = self.image_path / f"train/step_{step}"
                 path_to_saved_pics.mkdir(parents=True, exist_ok=True)
-            
+
             # clear temporal dir with images for validation
             path_validation = self.image_path / "generative_temp"
-            try: shutil.rmtree(path_validation)
-            except: pass
+            try:
+                shutil.rmtree(path_validation)
+            except:
+                pass
             path_validation.mkdir(parents=True, exist_ok=True)
 
         # save images for validation
         for i in range(len(generated_images)):
             image_path = path_validation / f"generated_image_{i + 1}.png"
             save_image(generated_images[i], image_path, format='png')
-            
+
         # save samples from training step
         if self.config.data.n_save_images is not None:
             # get random samples from generated images
             indexes = torch.as_tensor(np.random.choice(generated_images.size(0), self.config.data.n_save_images))
             sampled_images = generated_images[indexes.to(generated_images.device)]
-            
+
             # save each
             for i in range(len(sampled_images)):
                 image_path = path_to_saved_pics / f"generated_image_{i + 1}.png"
