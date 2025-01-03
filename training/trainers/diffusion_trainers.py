@@ -65,6 +65,13 @@ class BaseDiffusionTrainer(BaseTrainer):
             noisy_imgs, noise = self.noise_scheduler(sample_images, sample_time_staps)
             noise_predictions = self.ddpm(noisy_imgs, sample_time_staps)
 
+            # log some train images after apply of noise and fade in
+            if self.step % self.config.train.proccessing.val_step == 0:
+                mean = self.data_mean
+                std = self.data_std
+                imgs_to_log = noisy_imgs.cpu() * std[:, None, None] + mean[:, None, None]
+                self.logger.log_batch_of_images(imgs_to_log, step=self.step, images_type="train_imgs")
+
             # calculate loss
             preds_dict = {
                 'real_noise': noise,
@@ -109,7 +116,7 @@ class BaseDiffusionTrainer(BaseTrainer):
 
                 generated_images.append(gen_imgs)
 
-        generated_images = torch.cat(generated_images, dim=0)[:self.test_size]
+        generated_images = torch.cat(generated_images, dim=0)[:self.test_size].cpu()
 
         # revert normalization
         mean = self.data_mean

@@ -1,6 +1,6 @@
 exp:
-    exp_dir: experiments/diffusion/base
-    device: mps
+    exp_dir: experiments/diffusion/linear_schedule_diffusion
+    device: cuda
     seed: 777
     use_wandb: True
     model_type: diffusion
@@ -10,22 +10,24 @@ wandb:
     run_id: null
     entity: artem-fm
     project: diffusion
-    run_name: blending_time_diffusion
-    tags: ["diffusion", "blending"]
+    run_name: diffusion_linear_scheduler
+    tags: ["diffusion", "blending", "linear-schedule"]
 
 
-diffusion_steps: 300
+diffusion_steps: 500
 
 data:
     dataset_name: base_dataset
     input_train_dir: data/food_data/train
     input_val_dir: data/food_data/test
-    normalize_data: False
+    normalize_data: True
     samples_to_normalize: null
-    train_batch_size: 8
-    val_batch_size: 8
+    norm_mean: [0.5, 0.5, 0.5]
+    norm_std: [0.5, 0.5, 0.5]
+    train_batch_size: 64
+    val_batch_size: 64
     n_save_images: 64
-    workers: 8
+    workers: 4
 
 train:
     checkpoint_path: null
@@ -36,8 +38,8 @@ train:
 
     noise_scheduler:
         scheduler_type: linear
-        beta1: 1e-5
-        beta2: 2e-2
+        beta1: null
+        beta2: null
         num_timesteps: ${diffusion_steps}
     
     proccessing:
@@ -47,11 +49,11 @@ train:
         checkpoint_step: 15000
         val_step: 15000
     
-    use_amp: False
+    use_amp: True
     val_metrics: ["fid/isc/kid", "ms-ssim"]
 
 model_args:
-    feature_map_size: 128
+    feature_map_size: 45
     time_embedding_dim: 100
     diffusion_steps: ${diffusion_steps}
 

@@ -152,7 +152,7 @@ class TrainingLogger:
             for name, param in modules['ddpm'].named_parameters():
                 if param.requires_grad:
                     wandb.log({
-                        f"generator_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
+                        f"ddpm_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
                     }, step=step)
 
             # logging hyperparameters and states of optimizers

@@ -42,7 +42,7 @@ train:
         checkpoint_step: 15000
         val_step: 15000
     
-    use_amp: False
+    use_amp: True
     val_metrics: ["fid/isc/kid"]
 
 generator_args:

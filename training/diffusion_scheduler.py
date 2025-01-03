@@ -1,12 +1,36 @@
 import torch 
 import torch.nn.functional as F
 from utils.class_registry import ClassRegistry
+import math
 
 scheduler_registry = ClassRegistry()
 
 @scheduler_registry.add_to_registry(name="linear_diff")
 class DiffusionNoiseScheduler:
+    @staticmethod
+    def cosine_schedule(numsteps, start=0.2, end=1, tau=2, clip_min=1e-9):
+        # A gamma function based on cosine function.
+        v_start = math.cos(start * math.pi / 2) ** (2 * tau)
+        v_end = math.cos(end * math.pi / 2) ** (2 * tau)
+        output = torch.cos(((torch.arange(numsteps) / numsteps)  * (end - start) + start) * math.pi / 2) ** (2 * tau)
+        output = (v_end - output) / (v_end - v_start)
+        return torch.clip(output, clip_min, 1.).flip(0)
+    
+    @staticmethod
+    def sigmoid_schedule(numsteps, start=-3, end=3, tau=0.9, clip_min=1e-9):
+        # A gamma function based on sigmoid function.
+        v_start = torch.sigmoid(torch.tensor([start / tau]))
+        v_end = torch.sigmoid(torch.tensor([end / tau]))
+        output = torch.sigmoid(((torch.arange(numsteps) / numsteps) * (end - start) + start) / tau)
+        output = (v_end - output) / (v_end - v_start)
+        return torch.clip(output, clip_min, 1.).flip(0)
+    
     def __init__(self, scheduler_type, beta1, beta2, num_timesteps, device):
+        if beta1 is None or beta2 is None:
+            scale = 1000 / num_timesteps
+            beta1 = scale * 1e-4
+            beta2 = scale * 0.02
+
         assert beta1 < beta2 < 1.0, "beta1 and beta2 must be in (0, 1)"
         
         self.scheduler_type = scheduler_type
@@ -14,11 +38,17 @@ class DiffusionNoiseScheduler:
         self.beta2 = beta2
         self.steps = num_timesteps
         
-        assert scheduler_type in ['linear']
+        assert scheduler_type in ['linear', 'cosine', 'sigmoid']
         
         # compute betas
         if scheduler_type == 'linear':
             self.betas = torch.linspace(beta1, beta2, num_timesteps, device=device)
+        elif scheduler_type == 'cosine':
+            self.betas = self.cosine_schedule(num_timesteps).to(device)
+            self.betas = self.betas * (beta2 - beta1) + beta1
+        elif scheduler_type == 'sigmoid':
+            self.betas = self.sigmoid_schedule(num_timesteps).to(device)
+            self.betas = self.betas * (beta2 - beta1) + beta1
         
         # compute stats
         alphas = 1 - self.betas
