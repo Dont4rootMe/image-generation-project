@@ -122,6 +122,7 @@ class BaseDiffusionTrainer(BaseTrainer):
         mean = self.data_mean
         std = self.data_std
         generated_images = generated_images * std[:, None, None] + mean[:, None, None]
+        generated_images = torch.clip(generated_images, 0, 1)
 
         # prepare path to save images
         if step is None:

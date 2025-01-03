@@ -38,6 +38,7 @@ class MSELoss(nn.Module):
     def forward(self, batch):
         return self.loss_fn(batch["real_noise"], batch["pred_noise"]).mean()
 
+
 @losses_registry.add_to_registry(name="mae")
 class L1Loss(nn.Module):
     def __init__(self):

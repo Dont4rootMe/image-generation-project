@@ -92,7 +92,7 @@ class TrainingLogger:
         # this makes training curves smoother
         for loss_name, loss_val in losses_dict.items():
             self.losses_memory[loss_name].append(loss_val)
-            
+
     def log_model_parameters(self, modules, step):
         """
         Logging parameters of models and optimizers
@@ -100,7 +100,8 @@ class TrainingLogger:
         if 'gen' in modules:
             # logging generator weights and gradients
             for name, param in modules['gen'].named_parameters():
-                if 'adapters' in name: continue
+                if 'adapters' in name:
+                    continue
                 if param.requires_grad:
                     wandb.log({
                         f"generator_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
@@ -111,8 +112,9 @@ class TrainingLogger:
 
             if 'disc' in modules:
                 # logging discriminator weights
-                for name, param in  modules['disc'].named_parameters():
-                    if 'adapters' in name: continue
+                for name, param in modules['disc'].named_parameters():
+                    if 'adapters' in name:
+                        continue
                     if param.requires_grad:
                         wandb.log({
                             f"discriminator_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
@@ -122,8 +124,9 @@ class TrainingLogger:
                         # }, step=step)
             else:
                 # logging critic weights and gradients
-                for name, param in  modules['critic'].named_parameters():
-                    if 'adapters' in name: continue
+                for name, param in modules['critic'].named_parameters():
+                    if 'adapters' in name:
+                        continue
                     if param.requires_grad:
                         wandb.log({
                             f"critic_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
@@ -133,7 +136,7 @@ class TrainingLogger:
                         # }, step=step)
 
             # logging hyperparameters and states of optimizers
-            if 'disc' in modules:    
+            if 'disc' in modules:
                 wandb.log({
                     "hyperparam/generator_lr": modules['optimizer_gan'].param_groups[0]['lr'],
                     "hyperparam/discriminator_lr": modules['optimizer_disc'].param_groups[0]['lr'],
@@ -160,5 +163,3 @@ class TrainingLogger:
                 "hyperparam/ddpm_lr": modules['optimizer_ddpm'].param_groups[0]['lr'],
                 "hyperparam/ddpm_weight_decay": modules['optimizer_ddpm'].param_groups[0].get('weight_decay', 0),
             }, step=step)
-        
-        

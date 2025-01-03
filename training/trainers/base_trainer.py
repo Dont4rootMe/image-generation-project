@@ -97,7 +97,7 @@ class BaseTrainer:
         self.inference_path = self.image_path / 'inference'
         if self.config.train.checkpoint_path is None:
             self.inference_path.mkdir(parents=True, exist_ok=True)
-        
+
         # create dir for validation image generation
         self.all_validation_images = np.asarray(glob(self.config.data.input_val_dir + '/*/*.jpg'))
         self.validation_temp_dir = self.experiment_dir / 'validation_temp'
@@ -115,19 +115,18 @@ class BaseTrainer:
             transforms.ToTensor(),
             transforms.Resize((64, 64))
         ])
-        
+
         if 'norm_mean' in self.config.data and self.config.data.norm_mean is not None:
             assert len(self.config.data.norm_mean) == 3
             mean = list(self.config.data.norm_mean)
         else:
             mean = None
-            
+
         if 'norm_std' in self.config.data and self.config.data.norm_std is not None:
             assert len(self.config.data.norm_std) == 3
             std = list(self.config.data.norm_std)
         else:
             std = None
-            
 
         # prepare train dataset
         self.train_dataset = datasets_registry[self.config.data.dataset_name](
@@ -136,7 +135,7 @@ class BaseTrainer:
             normalize_data=self.config.data.normalize_data,
             mean=mean, std=std
         )
-        
+
         # get size of test
         self.test_size = len(self.all_validation_images)
 
@@ -153,7 +152,7 @@ class BaseTrainer:
             shuffle=True,
             num_workers=self.config.data.workers
         )
-        
+
     @abstractmethod
     def get_modules_dict(self):
         pass
@@ -171,17 +170,19 @@ class BaseTrainer:
                 val_metrics_dict, images = self.validate()
                 self.logger.log_batch_of_images(images, step=self.step, images_type="validation_imgs")
                 self.logger.log_val_metrics(val_metrics_dict, step=self.step)
-                
+
             if self.step % self.config.train.proccessing.log_step == 0:
                 self.logger.log_train_losses(self.step)
 
             if self.step % self.config.train.proccessing.checkpoint_step == 0:
                 self.save_checkpoint()
-                
+
         # delete temporal dir with images for validation
         path_validation = self.image_path / "temp"
-        try: shutil.rmtree(path_validation)
-        except: pass
+        try:
+            shutil.rmtree(path_validation)
+        except:
+            pass
 
     @abstractmethod
     def train_step(self):
@@ -195,11 +196,13 @@ class BaseTrainer:
     def validate(self):
         self.to_eval()
         images_sample, images_pth = self.synthesize_images(self.step)
-        
+
         # creation temporate dir for validation images
         if self.validation_temp_dir.exists():
-            try: shutil.rmtree(self.validation_temp_dir)
-            except: pass
+            try:
+                shutil.rmtree(self.validation_temp_dir)
+            except:
+                pass
         self.validation_temp_dir.mkdir(parents=True, exist_ok=True)
         for i, path in enumerate(self.all_validation_images):
             shutil.copy(path, self.validation_temp_dir / f"{i}.jpg")
@@ -211,12 +214,14 @@ class BaseTrainer:
                 synt_pth=str(images_pth),
                 device=self.device
             )
-            metrics_dict.update(stats) 
-        
-        # delition of temporate dir 
-        try: shutil.rmtree(self.validation_temp_dir)
-        except: pass
-        
+            metrics_dict.update(stats)
+
+        # delition of temporate dir
+        try:
+            shutil.rmtree(self.validation_temp_dir)
+        except:
+            pass
+
         return metrics_dict, images_sample
 
     @abstractmethod
