@@ -1,3 +1,4 @@
+import os
 import torch
 from torch import nn
 
@@ -182,3 +183,8 @@ class BlendingUnet(nn.Module):
             x = up(x, time_embeds)
 
         return self.output_projection(x)
+    
+    def load_model(self, path):
+        assert os.path.exists(path), f'BlendingUnet model weights were not found on path {path}'
+        self.load_state_dict(torch.load(path))
+        return self
