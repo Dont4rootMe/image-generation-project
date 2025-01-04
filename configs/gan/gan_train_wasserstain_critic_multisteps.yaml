@@ -27,7 +27,7 @@ data:
     workers: 8
 
 train:
-    checkpoint_path: /home/ubuntu/image-generation-project/experiments/wasserstain_gan_critic_multisteps/checkpoints
+    checkpoint_path: null
     models:
         trainer: wasserstain_gan_trainer
         generator: wasserstain_gen
