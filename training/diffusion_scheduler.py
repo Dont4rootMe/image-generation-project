@@ -5,8 +5,6 @@ import math
 
 scheduler_registry = ClassRegistry()
 
-
-@scheduler_registry.add_to_registry(name="linear_diff")
 class DiffusionNoiseScheduler:
     @staticmethod
     def cosine_schedule(numsteps, start=0.2, end=1, tau=2, clip_min=1e-9):
@@ -92,3 +90,39 @@ class DiffusionNoiseScheduler:
         # return denoised images
         addon_noise = torch.randn_like(images)
         return predicted_mean + posterior_variance[:, None, None, None] * addon_noise
+
+
+class NCSNScheduler:
+    def __init__(self, num_timesteps, sigma_max=1, sigma_min=0.01, device="cpu"):
+        """
+        Инициализация шедулера для NCSN.
+        """
+        self.num_timesteps = num_timesteps
+        self.sigma_max = sigma_max
+        self.sigma_min = sigma_min
+        self.device = device
+
+        # logarithmic scale for noise
+        self.sigmas = torch.logspace(
+            math.log10(self.sigma_max),
+            math.log10(self.sigma_min), 
+            num_timesteps, 
+            device=device
+        )
+        
+        # normalizing constants
+        self.inv_sigmas = 1 / self.sigmas
+
+    def diffusion_forward(self, images, steps):
+        # generate normal noise
+        noise = torch.randn_like(images)
+        
+        # get successing variances
+        sigma = torch.gather(self.sigmas, 0, steps)
+        
+        # noise images
+        noisy_images = images + sigma[:, None, None, None] * noise
+        return noisy_images, torch.clamp(noise / sigma[:, None, None, None], -1000, 1000)
+
+    def __call__(self, images, steps):
+        return self.diffusion_forward(images, steps)

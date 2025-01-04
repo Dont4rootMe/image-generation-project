@@ -150,7 +150,7 @@ class TrainingLogger:
                     "hyperparam/generator_weight_decay": modules['optimizer_gan'].param_groups[0].get('weight_decay', 0),
                     "hyperparam/critic_weight_decay": modules['optimizer_critic'].param_groups[0].get('weight_decay', 0)
                 }, step=step)
-        else:
+        elif 'ddpm' in modules:
             # logging ddpm weights and gradients
             for name, param in modules['ddpm'].named_parameters():
                 if param.requires_grad:
@@ -162,4 +162,17 @@ class TrainingLogger:
             wandb.log({
                 "hyperparam/ddpm_lr": modules['optimizer_ddpm'].param_groups[0]['lr'],
                 "hyperparam/ddpm_weight_decay": modules['optimizer_ddpm'].param_groups[0].get('weight_decay', 0),
+            }, step=step)
+        else:
+            # logging ddpm weights and gradients
+            for name, param in modules['ncsn'].named_parameters():
+                if param.requires_grad:
+                    wandb.log({
+                        f"ncsn_weights/{name}": wandb.Histogram(param.data.cpu().numpy())
+                    }, step=step)
+
+            # logging hyperparameters and states of optimizers
+            wandb.log({
+                "hyperparam/ncsn_lr": modules['optimizer_ncsn'].param_groups[0]['lr'],
+                "hyperparam/ncsn_weight_decay": modules['optimizer_ncsn'].param_groups[0].get('weight_decay', 0),
             }, step=step)

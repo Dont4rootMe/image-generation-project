@@ -1,0 +1,67 @@
+exp:
+    exp_dir: experiments/diffusion/ncsn
+    device: cuda
+    seed: 777
+    use_wandb: True
+    model_type: diffusion
+
+wandb:
+    WANDB_KEY: null
+    run_id: null
+    entity: artem-fm
+    project: diffusion
+    run_name: ncsn_base
+    tags: ["ncsn", "blending", "log-schedule"]
+
+
+num_timesteps: 10
+
+data:
+    dataset_name: base_dataset
+    input_train_dir: data/food_data/train
+    input_val_dir: data/food_data/test
+    normalize_data: True
+    samples_to_normalize: null
+    norm_mean: [0.5, 0.5, 0.5]
+    norm_std: [0.5, 0.5, 0.5]
+    train_batch_size: 64
+    val_batch_size: 64
+    n_save_images: 64
+    workers: 4
+
+train:
+    checkpoint_path: null
+    models:
+        trainer: base_ncsn_trainer
+        model: blend_diffusion
+        optimizer: adamW
+
+    noise_scheduler:
+        sigma_max: 1.0
+        sigma_min: 0.001
+        num_timesteps: ${num_timesteps}
+        langeven_inner_steps: 25
+    
+    proccessing:
+        start_step: 0
+        steps: 1000000
+        log_step: 200
+        checkpoint_step: 15000
+        val_step: 15000
+    
+    use_amp: True
+    val_metrics: ["fid/isc/kid", "ms-ssim"]
+
+model_args:
+    feature_map_size: 64
+    time_embedding_dim: 128
+    diffusion_steps: ${num_timesteps}
+
+
+optimizer_args:
+    lr: 0.0001
+
+losses_coef:
+    mse: 1.0
+
+
