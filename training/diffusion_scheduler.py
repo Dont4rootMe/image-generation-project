@@ -8,6 +8,13 @@ scheduler_registry = ClassRegistry()
 
 @scheduler_registry.add_to_registry(name="linear_diff")
 class DiffusionNoiseScheduler:
+    """
+    Methods proposed in papers:
+    
+    1. "On the Importance of Noise Scheduling for Diﬀusion Models" (https://arxiv.org/pdf/2301.10972)
+    2. "Denoising Diffusion Probabilistic Models" (https://arxiv.org/pdf/2006.11239)
+    """
+    
     @staticmethod
     def cosine_schedule(numsteps, start=0.2, end=1, tau=2, clip_min=1e-9):
         # A gamma function based on cosine function.

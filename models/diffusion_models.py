@@ -107,8 +107,33 @@ class ConvBlock(nn.Module):
 
 @diffusion_models_registry.add_to_registry(name="blend_diffusion")
 class BlendingUnet(nn.Module):
+    """
+    Implementation of Unet with inception of time unit embeddings, inspired by original Unet and
+    FiLM adapter layers. Uses residual connection via concatienation of channels as proposed in 
+    original paper and implements sinusoidal time embedding representation as initial state.
+    
+    All trickes listed below:
+    - Uses time blending into temporal outputs same as FiLM does
+    - Uses different types of noise schedules (linear, sigmoidal or sinusoidal)
+    
+    Sources with comments:
+    1. Course of "Deep Generative Models" from MIPT by Roman Isachenko 
+    (https://youtube.com/playlist?list=PLk4h7dmY2eYEpiBdM9bIN5LjH5bQsM4tg&si=pOcfqoOK-45rKp3p)
+    2. Paper on diffusional schedules "On the Importance of Noise Scheduling for Diﬀusion Models"
+    (https://arxiv.org/pdf/2301.10972)
+    3. Example of infrostruction of ddpm-based generational framework 
+    (https://github.com/lucidrains/denoising-diffusion-pytorch)
+    
+    **Special Thanks:** course of "Effective methods in machine learning" on 4 curiculum year at MSU, 
+    lecture on DDPM by Alexandr Oganov.
+    """
+    
     @staticmethod
     def get_sinusoidal_embeddings(diffusion_steps, time_embedding_dim, n=1000.0):
+        """
+        Implementation copyed from blogpost "Creating Sinusoidal Positional Embedding from Scratch in PyTorch"
+        (https://pub.aimind.so/creating-sinusoidal-positional-embedding-from-scratch-in-pytorch-98c49e153d6)
+        """
         assert time_embedding_dim % 2 == 0, f'Sinusoidal positional embedding cannot apply to odd token embedding dim (got dim={time_embedding_dim})'
 
         T = diffusion_steps

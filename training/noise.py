@@ -12,7 +12,8 @@ class NoiseScheduler:
                  stop_noise_on: float = 0.75
                  ):
         """
-        On the Importance of Noise Scheduling for Diﬀusion Models 
+        The original paper, where scheduler function was appropriated is
+        "On the Importance of Noise Scheduling for Diﬀusion Models"
         (https://arxiv.org/pdf/2301.10972)
         """
         self.start_std = start_std

@@ -91,6 +91,29 @@ class VerySimpleBlock(nn.Module):
 
 @gens_registry.add_to_registry(name="wasserstain_gen")
 class WasserstainGenerator(nn.Module):
+    """
+    Implementation of WasserstainGAN Generator incorporates ideas of using Wasserstain Distance and 
+    implements several methods of increasing quality and diversity of generated images (mode coverage).
+
+    All trickes listed below:
+    - Wassestain target function and Gradient Penalty for Lipschitz continuity of critic
+    - Using Deep Convolutional GAN (DCGAN)
+    - Using Fade In procedure with constant predefined stages
+    - Using soft rectefying as activation functions
+    - Normalisation of output via hyperbolic tangent
+    - Uses multiple ministeps of each model (critic and generator) each step of training
+    - Adding Noise to real images preventing colapse of discriminator
+        (even though wasserstain GANs dont suffer from it in theory)
+
+    Sources with comments:
+    1. Great help from "How to Train a GAN? Tips and tricks to make GANs work" (https://github.com/soumith/ganhacks)
+    2. Course of "Deep Generative Models" from MIPT by Roman Isachenko
+    (https://youtube.com/playlist?list=PLk4h7dmY2eYEpiBdM9bIN5LjH5bQsM4tg&si=pOcfqoOK-45rKp3p)
+    3. Model architecture was inspired by github (https://github.com/nourihilscher/PyTorch-Convolutional-GAN)
+
+    **Special Thanks:** course of practicum on 3 curiculum year at MSU, lecture on GANs by Alexandr Oganov.
+    """
+
     def __init__(self, model_config):
         super().__init__()
 
@@ -176,6 +199,29 @@ class WasserstainGenerator(nn.Module):
 
 @discs_registry.add_to_registry(name="wasserstain_critic")
 class WasserstainCritic(nn.Module):
+    """
+    Implementation of WasserstainGAN Generator incorporates ideas of using Wasserstain Distance and 
+    implements several methods of increasing quality and diversity of generated images (mode coverage).
+
+    All trickes listed below:
+    - Wassestain target function and Gradient Penalty for Lipschitz continuity of critic
+    - Using Deep Convolutional GAN (DCGAN)
+    - Using Fade In procedure with constant predefined stages
+    - Using soft rectefying as activation functions
+    - Normalisation of output via hyperbolic tangent
+    - Uses multiple ministeps of each model (critic and generator) each step of training
+    - Adding Noise to real images preventing colapse of discriminator
+        (even though wasserstain GANs dont suffer from it in theory)
+
+    Sources with comments:
+    1. Great help from "How to Train a GAN? Tips and tricks to make GANs work" - https://github.com/soumith/ganhacks
+    2. Course of "Deep Generative Models" from MIPT by Roman Isachenko – 
+    https://youtube.com/playlist?list=PLk4h7dmY2eYEpiBdM9bIN5LjH5bQsM4tg&si=pOcfqoOK-45rKp3p
+    3. Model architecture was inspired by github - https://github.com/nourihilscher/PyTorch-Convolutional-GAN
+
+    **Special Thanks:** course of practicum on 3 curiculum year at MSU, lecture on GANs by Alexandr Oganov.
+    """
+
     def __init__(self, model_config):
         super().__init__()
 
