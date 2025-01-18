@@ -28,7 +28,6 @@ class FID:
         )
 
         return {
-            'metric/inception_score (isc)': metrics['inception_score_mean'],
             'metric/frechet_inception_distance (fid)': metrics['frechet_inception_distance'],
             'metric/kernel_inception_distance (kid)': metrics['kernel_inception_distance_mean']
         }

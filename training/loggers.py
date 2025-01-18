@@ -56,43 +56,8 @@ class WandbLogger:
         # log images
         wandb_images = {key: wandb.Image(img) for key, img in images.items()}
         wandb.log(wandb_images, step=step)
-
-
-class TrainingLogger:
-    def __init__(self, config):
-        self.logger = WandbLogger(config)
-        self.losses_memory = defaultdict(list)
-
-    def log_train_losses(self, step: int):
-        # avarage losses in losses_memory
-        avg_losses = {
-            loss_name: sum(loss_vals) / len(loss_vals)
-            for loss_name, loss_vals in self.losses_memory.items()
-        }
-
-        # log them and clear losses_memory
-        self.logger.log_values(avg_losses, step)
-        self.losses_memory.clear()
-
-    def log_val_metrics(self, val_metrics: dict, step: int):
-        self.logger.log_values(val_metrics, step)
-
-    def log_batch_of_images(self, batch: torch.Tensor, step: int, images_type: str = ""):
-        # batch of tensors -> images
-        images = {}
-        for i, img_tensor in enumerate(batch):
-            img = Image.fromarray((img_tensor.cpu().numpy().transpose(1, 2, 0) * 255).astype("uint8"))
-            images[f"{images_type}/image_{i}"] = img
-
-        # log images
-        self.logger.log_images(images, step)
-
-    def update_losses(self, losses_dict):
-        # it is useful to average losses over a number of steps rather than track them at each step
-        # this makes training curves smoother
-        for loss_name, loss_val in losses_dict.items():
-            self.losses_memory[loss_name].append(loss_val)
-
+        
+    @staticmethod
     def log_model_parameters(self, modules, step):
         """
         Logging parameters of models and optimizers
@@ -163,3 +128,61 @@ class TrainingLogger:
                 "hyperparam/ddpm_lr": modules['optimizer_ddpm'].param_groups[0]['lr'],
                 "hyperparam/ddpm_weight_decay": modules['optimizer_ddpm'].param_groups[0].get('weight_decay', 0),
             }, step=step)
+
+
+class TrainingLogger:
+    def __init__(self, config):
+        if config.exp.use_wandb:
+            self.logger = WandbLogger(config)
+            self.losses_memory = defaultdict(list)
+        else:
+            self.logger = None
+            self.losses_memory = None
+
+    def log_train_losses(self, step: int):
+        if self.logger is None:
+            return
+        
+        # avarage losses in losses_memory
+        avg_losses = {
+            loss_name: sum(loss_vals) / len(loss_vals)
+            for loss_name, loss_vals in self.losses_memory.items()
+        }
+
+        # log them and clear losses_memory
+        self.logger.log_values(avg_losses, step)
+        self.losses_memory.clear()
+
+    def log_val_metrics(self, val_metrics: dict, step: int):
+        if self.logger is None:
+            return
+        
+        self.logger.log_values(val_metrics, step)
+
+    def log_batch_of_images(self, batch: torch.Tensor, step: int, images_type: str = ""):
+        if self.logger is None:
+            return
+        
+        # batch of tensors -> images
+        images = {}
+        for i, img_tensor in enumerate(batch):
+            img = Image.fromarray((img_tensor.cpu().numpy().transpose(1, 2, 0) * 255).astype("uint8"))
+            images[f"{images_type}/image_{i}"] = img
+
+        # log images
+        self.logger.log_images(images, step)
+
+    def update_losses(self, losses_dict):
+        if self.logger is None:
+            return
+        
+        # it is useful to average losses over a number of steps rather than track them at each step
+        # this makes training curves smoother
+        for loss_name, loss_val in losses_dict.items():
+            self.losses_memory[loss_name].append(loss_val)
+
+    def log_model_parameters(self, modules, step):
+        if self.logger is None:
+            return
+        
+        self.logger.log_model_parameters(modules, step)

@@ -2,7 +2,7 @@ exp:
     exp_dir: experiments/gan/wasserstain_gan_small
     device: cuda 
     seed: 777
-    use_wandb: True
+    use_wandb: False
     model_type: gan
 
 wandb:

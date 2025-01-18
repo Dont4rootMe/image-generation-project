@@ -191,9 +191,9 @@ class WasserstainGenerator(nn.Module):
     def max_blocks(self):
         return 5
 
-    def load_model(self, path):
+    def load_model(self, path, device='cpu'):
         assert os.path.exists(path), f'Wasserstain Generator model weights were not found on path {path}'
-        self.load_state_dict(torch.load(path))
+        self.load_state_dict(torch.load(path, map_location=torch.device(device), weights_only=True))
         return self
 
 
@@ -291,7 +291,7 @@ class WasserstainCritic(nn.Module):
     def max_blocks(self):
         return 5
 
-    def load_model(self, path):
+    def load_model(self, path, device='cpu'):
         assert os.path.exists(path), f'Wasserstain Critic model weights were not found on path {path}'
-        self.load_state_dict(torch.load(path))
+        self.load_state_dict(torch.load(path, map_location=torch.device(device), weights_only=True))
         return self

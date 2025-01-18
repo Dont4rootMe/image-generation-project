@@ -1,8 +1,8 @@
 exp:
     exp_dir: experiments/gan/wasserstain_gan_critic_multisteps
-    device: cuda 
+    device: mps 
     seed: 777
-    use_wandb: True
+    use_wandb: False
     model_type: gan
 
 wandb:

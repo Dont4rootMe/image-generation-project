@@ -209,7 +209,7 @@ class BlendingUnet(nn.Module):
 
         return self.output_projection(x)
     
-    def load_model(self, path):
+    def load_model(self, path, device='cpu'):
         assert os.path.exists(path), f'BlendingUnet model weights were not found on path {path}'
-        self.load_state_dict(torch.load(path))
+        self.load_state_dict(torch.load(path, map_location=torch.device(device), weights_only=True))
         return self

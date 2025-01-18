@@ -197,8 +197,8 @@ class WasserstainGANTrainer(BaseTrainer):
 
         # load models if checkpoint path is provided
         if self.config.train.checkpoint_path is not None:
-            self.generator.load_model(self.checkpoint_path / 'generator.pth')
-            self.critic.load_model(self.checkpoint_path / 'critic.pth')
+            self.generator.load_model(self.checkpoint_path / 'generator.pth', self.device)
+            self.critic.load_model(self.checkpoint_path / 'critic.pth', self.device)
 
         # if fade in is off then use whole model
         if not ('fade_in' in self.config.train and self.config.train.fade_in.use_fade_in):
@@ -374,22 +374,23 @@ class WasserstainGANTrainer(BaseTrainer):
         generated_images = torch.clamp(generated_images, 0, 1)
 
         # prepare path to save images
-        if step is None:
-            # if it is inference – save to inference path
-            path_to_saved_pics = self.inference_path
-        else:
-            # if we save intermediate results - create dir for that step
-            if self.config.data.n_save_images is not None:
+        if self.config.data.n_save_images is not None:
+            if step is None:
+                # if it is inference – save to inference path
+                path_to_saved_pics = self.inference_path
+            else:
+                # if we save intermediate results - create dir for that step
                 path_to_saved_pics = self.image_path / f"train/step_{step}"
-                path_to_saved_pics.mkdir(parents=True, exist_ok=True)
+            
+            path_to_saved_pics.mkdir(parents=True, exist_ok=True)
 
-            # clear temporal dir with images for validation
-            path_validation = self.image_path / "generative_temp"
-            try:
-                shutil.rmtree(path_validation)
-            except:
-                pass
-            path_validation.mkdir(parents=True, exist_ok=True)
+        # clear temporal dir with images for validation
+        path_validation = self.image_path / "generative_temp"
+        try:
+            shutil.rmtree(path_validation)
+        except:
+            pass
+        path_validation.mkdir(parents=True, exist_ok=True)
 
         # save images for validation
         for i in range(len(generated_images)):

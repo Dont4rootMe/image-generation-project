@@ -14,6 +14,8 @@ from datasets.datasets import datasets_registry
 from metrics.metrics import metrics_registry
 from torchvision import transforms
 
+from omegaconf import OmegaConf
+
 
 class BaseTrainer:
     @staticmethod
@@ -48,6 +50,9 @@ class BaseTrainer:
         self.setup_dataloaders()
 
     def setup_inference(self):
+        self.step = None
+        self.start_step = None
+        
         self.setup_experiment_dir()
 
         self.setup_models()
@@ -78,15 +83,16 @@ class BaseTrainer:
     def to_eval(self):
         pass
 
-    def setup_experiment_dir(self):
+    def setup_experiment_dir(self, is_inference=False):
         # create dir for experiment
         self.experiment_dir = Path(self.config.exp.exp_dir)
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
 
-        # create dir for checkpoint dumps in experiment dir
-        self.save_path = self.experiment_dir / 'checkpoints'
-        if self.config.train.checkpoint_path is None:
-            self.save_path.mkdir(parents=True, exist_ok=True)
+        if not is_inference:
+            # create dir for checkpoint dumps in experiment dir
+            self.save_path = self.experiment_dir / 'checkpoints'
+            if self.config.train.checkpoint_path is None:
+                self.save_path.mkdir(parents=True, exist_ok=True)
 
         # create dir for image logging in experiment dir
         self.image_path = self.experiment_dir / 'images'
@@ -178,7 +184,7 @@ class BaseTrainer:
                 self.save_checkpoint()
 
         # delete temporal dir with images for validation
-        path_validation = self.image_path / "temp"
+        path_validation = self.image_path / "generative_temp"
         try:
             shutil.rmtree(path_validation)
         except:
@@ -231,9 +237,13 @@ class BaseTrainer:
     @torch.no_grad()
     def inference(self):
         self.to_eval()
-        images_sample, images_pth = self.synthesize_images(None)
-
-        # # Validate your model, save images
-        # # Calculate metrics
-        # # Log if needed
-        # raise NotImplementedError()
+        metrics_dict, _ = self.validate()
+        
+        # clear temporal dir with images for validation
+        path_validation = self.image_path / "generative_temp"
+        try:
+            shutil.rmtree(path_validation)
+        except:
+            pass
+        
+        print(OmegaConf.to_yaml(OmegaConf.create(metrics_dict)))

@@ -23,7 +23,7 @@ class BaseDiffusionTrainer(BaseTrainer):
 
         # model if checkpoint path is provided
         if self.config.train.checkpoint_path is not None:
-            self.ddpm.load_model(self.checkpoint_path / 'ddpm.pth')
+            self.ddpm.load_model(self.checkpoint_path / 'ddpm.pth', self.device)
 
         # define noise scheduler for Gaussian proccess
         self.noise_scheduler = DiffusionNoiseScheduler(
@@ -99,7 +99,7 @@ class BaseDiffusionTrainer(BaseTrainer):
         }
 
     def save_checkpoint(self):
-        torch.save(self.ddpm.state_dict(), self.save_path / 'ppdm.pth')
+        torch.save(self.ddpm.state_dict(), self.save_path / 'ddpm.pth')
         torch.save(self.ddpm_optimizer.state_dict(), self.save_path / 'ddpm_optimizer.pth')
 
     def synthesize_images(self, step=None):

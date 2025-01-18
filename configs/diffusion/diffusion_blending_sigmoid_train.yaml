@@ -2,7 +2,7 @@ exp:
     exp_dir: experiments/diffusion/sigmoid_schedule_diffusion
     device: cuda
     seed: 777
-    use_wandb: True
+    use_wandb: False
     model_type: diffusion
 
 wandb:
