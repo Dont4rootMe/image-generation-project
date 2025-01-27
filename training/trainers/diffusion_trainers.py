@@ -123,24 +123,25 @@ class BaseDiffusionTrainer(BaseTrainer):
         std = self.data_std
         generated_images = generated_images * std[:, None, None] + mean[:, None, None]
         generated_images = torch.clip(generated_images, 0, 1)
-
+        
         # prepare path to save images
-        if step is None:
-            # if it is inference – save to inference path
-            path_to_saved_pics = self.inference_path
-        else:
-            # if we save intermediate results - create dir for that step
-            if self.config.data.n_save_images is not None:
+        if self.config.data.n_save_images is not None:
+            if step is None:
+                # if it is inference – save to inference path
+                path_to_saved_pics = self.inference_path
+            else:
+                # if we save intermediate results - create dir for that step
                 path_to_saved_pics = self.image_path / f"train/step_{step}"
-                path_to_saved_pics.mkdir(parents=True, exist_ok=True)
 
-            # clear temporal dir with images for validation
-            path_validation = self.image_path / "generative_temp"
-            try:
-                shutil.rmtree(path_validation)
-            except:
-                pass
-            path_validation.mkdir(parents=True, exist_ok=True)
+            path_to_saved_pics.mkdir(parents=True, exist_ok=True)
+
+        # clear temporal dir with images for validation
+        path_validation = self.image_path / "generative_temp"
+        try:
+            shutil.rmtree(path_validation)
+        except:
+            pass
+        path_validation.mkdir(parents=True, exist_ok=True)
 
         # save images for validation
         for i in range(len(generated_images)):

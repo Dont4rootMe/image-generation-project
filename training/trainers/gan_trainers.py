@@ -201,7 +201,7 @@ class WasserstainGANTrainer(BaseTrainer):
             self.critic.load_model(self.checkpoint_path / 'critic.pth', self.device)
 
         # if fade in is off then use whole model
-        if not ('fade_in' in self.config.train and self.config.train.fade_in.use_fade_in):
+        if not ('fade_in' in self.config.train and self.config.train.fade_in.use_fade_in and self.step is not None):
             self.generator.set_num_blocks(self.generator.max_blocks)
             self.critic.set_num_blocks(self.critic.max_blocks)
         else:

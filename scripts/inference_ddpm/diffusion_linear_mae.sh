@@ -1,0 +1,1 @@
+python inference.py exp.config_path=configs/diffusion/diffusion_blending_mae.yaml train.checkpoint_path=checkpoints/diffusion/diffusion_mae

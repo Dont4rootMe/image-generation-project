@@ -24,6 +24,8 @@ class FadeInScheduler:
         }
 
     def check_step(self, step):
+        if step is None:
+            return 4
         curr_level = torch.sum(self.tresholds < step).item() + self.start_from
 
         return curr_level

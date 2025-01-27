@@ -1,0 +1,1 @@
+python inference.py exp.config_path=configs/diffusion/diffusion_blending_sigmoid_train.yaml train.checkpoint_path=checkpoints/diffusion/sigmoid_schedule_diffusion

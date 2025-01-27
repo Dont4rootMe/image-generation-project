@@ -1,0 +1,1 @@
+python inference.py exp.config_path=configs/diffusion/diffusion_blending_cosine_train.yaml train.checkpoint_path=checkpoints/diffusion/cosine_schedule_diffusion

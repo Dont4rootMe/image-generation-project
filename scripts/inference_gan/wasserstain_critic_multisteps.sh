@@ -1,0 +1,1 @@
+python inference.py exp.config_path=configs/gan/gan_train_wasserstain_critic_multisteps.yaml train.checkpoint_path=checkpoints/gan/wasserstain_gan_critic_multisteps
